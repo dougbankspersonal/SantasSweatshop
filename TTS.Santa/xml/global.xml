@@ -1,0 +1,37 @@
+<Defaults>
+    <Panel class="PanelClass" height ="10" width = "10" returnToOriginalPositionWhenReleased="false" allowDragging="true" showAnimation="FadeIn" hideAnimation="FadeOut" rectAlignment="MiddleRight" outline="#635351" outlineSize="2 -2" />
+    /* button */
+    <Button class="HostButton" width="100" height="30" rectAlignment="LowerCenter" color="rgb(0.8,1,1)"/>
+    <Button class="PlayerButton" width="100" height="30" rectAlignment="LowerCenter" color="rgb(1,1,0.8)"/>
+    /* cells */
+    <TableLayout class="FinalTallyTableLayoutClass" autoCalculateHeight="true" rectAlignment="LowerCenter" rowBackgroundColor="#00ff00"/>
+    /* rows */
+    <Row class="TextRowClass" dontUseTableRowBackground="true" />
+    <Row class="InputRowClass" dontUseTableRowBackground="true" />
+
+    /* cells */
+    <Cell class ="InputCellClass" overrideGlobalCellPadding="true" padding="20 20 10 10" />
+    <Cell class ="LabelCellClass" />
+    <Cell class ="PlayerNameCellClass" />
+    <Cell class ="SumCellClass" />
+
+    /* input fields */
+    <InputField class="InputClass" characterValidation="Integer" rectAlignment="UpperCenter" textAlignment = "MiddleCenter" fontSize="14" fontStyle="Bold" colors="#FFFFFF|#dddddd|#FFFFFF|rgba(0.78,0.78,0.78,0.5)" />
+
+    /* text */
+    <Text class="LabelTextClass" fontSize="18" fontStyle="Bold" color="#000000" />
+    <Text class="PlayerNameTextClass" fontSize="18" fontStyle="Bold" color="#000000" />
+    <Text class="SumTextClass"  fontSize="18" fontStyle="Bold" color="#000000" />
+    <Text class="TitleTextClass" fontSize="24" fontStyle="Bold" color="#000000" rectAlignment="UpperCenter" textAlignment="UpperCenter" />
+</Defaults>
+/* Buttons just for host.*/
+<Button id="SetupButton" visibility="Host" class="HostButton" onClick="setup" text="Setup Game" offsetXY="-200 10"/>
+<Button id="CleanupButton" visibility="Host" class="HostButton" onClick="cleanup" text="Cleanup Game" offsetXY="200 10"/>
+<Button id="DealNextRoundButton" visibility="Host" class="HostButton" onClick="dealNextRound" text="Deal Next Round" offsetXY="0 10"/>
+<Button id="ToggleBidsPanelButton" visibility="Host" class="HostButton" onClick="toggleBidsPanel" text="Show Bids" offsetXY="0 10"/>
+<Button id="ToggleFinalTallyPanelButton" visibility="Host" class="HostButton" onClick="toggleFinalTally" text="Show Final Panel" offsetXY="0 10"/>
+/* Buttons for all players */
+<Button id="BidButton" class="PlayerButton" onClick="submitBid" text="Submit Bid" offsetXY="-200 10"/>
+/* Panels */
+<Panel id="FinalTallyPanel" class="PanelClass" active="false">
+<Panel id="BidPanel" class="PanelClass" active="false">

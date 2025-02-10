@@ -1,0 +1,266 @@
+<html>
+<head>
+	<link rel="stylesheet" href="../css/main.css">
+	<link rel="stylesheet" href="../css/card.css">
+	<link rel="stylesheet" href="../css/toyComponent.css">
+	<link rel="stylesheet" href="../css/image.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&display=swap" rel="stylesheet">
+	<meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <style type="text/css">
+	</style>
+</head>
+
+<body id="body">
+	<!-- configure Dojo -->
+	<script>
+		// Instead of using data-dojo-config, we're creating a dojoConfig
+		// object *before* we load dojo.js; they're functionally identical,
+		// it's just easier to read this approach with a larger configuration.
+		var dojoConfig = {
+			baseUrl: "..",
+			async: true,
+			// This code registers the correct location of the "demo"
+			// package so we can load Dojo from the CDN whilst still
+			// being able to load local modules
+			packages: [
+				{ name: "dojo", location: "../../bower_components/dojo" },
+				{ name: "javascript", location: "javascript" }
+			]
+		};
+	</script>
+	<!-- load Dojo -->
+	<script src="../../../bower_components/dojo/dojo.js"></script>
+
+    <script>
+		require([
+			'javascript/cards',
+            'javascript/toyComponentCards',
+			'javascript/gameUtils',
+		], function (cards, toyComponentCards, gameUtils, dojo) {
+
+			var ttsCards = true
+			var noBacks = true
+
+            var toyComponentCardConfigs = [
+			{
+                    title: "Doll",
+                    class: "doll",
+					image: "../images/ToyComponents/doll.png",
+                    craft: {
+						number: 3,
+						points: 2,
+					},
+					floor: -2,
+					playType: "normal",
+					color: "#9B111E",
+                },
+				{
+                    title: "Doll",
+                    class: "doll",
+					image: "../images/ToyComponents/doll.png",
+                    craft: {
+						number: 3,
+						points: 2,
+					},
+					floor: -2,
+					playType: "normal",
+					color: "#9B111E",
+                },
+				{
+                    title: "Doll",
+                    class: "doll",
+					image: "../images/ToyComponents/doll.png",
+                    craft: {
+						number: 3,
+						points: 2,
+					},
+					floor: -2,
+					playType: "normal",
+					color: "#9B111E",
+                },
+				{
+                    title: "Doll",
+                    class: "doll",
+					image: "../images/ToyComponents/doll.png",
+                    craft: {
+						number: 3,
+						points: 2,
+					},
+					floor: -2,
+					playType: "normal",
+					color: "#9B111E",
+                },
+				{
+                    title: "Doll",
+                    class: "doll",
+					image: "../images/ToyComponents/doll.png",
+                    craft: {
+						number: 3,
+						points: 2,
+					},
+					floor: -2,
+					playType: "normal",
+					color: "#9B111E",
+                },
+				{
+                    title: "Doll",
+                    class: "doll",
+					image: "../images/ToyComponents/doll.png",
+                    craft: {
+						number: 3,
+						points: 2,
+					},
+					floor: -2,
+					playType: "normal",
+					color: "#9B111E",
+                },
+                {
+                    title: "Kite",
+                    class: "kite",
+					image: "../images/ToyComponents/kite.png",
+                    craft: {
+						number: 3,
+						points: 3,
+					},
+					floor: -3,
+					playType: "normal",
+					color: "#9B111E",
+                },
+                {
+                    title: "Robot",
+                    class: "robot",
+					image: "../images/ToyComponents/robot.png",
+                    craft: {
+						number: 3,
+						points: 4,
+					},
+					floor: -4,
+					playType: "normal",
+					color: "#9B111E",
+                },
+                {
+                    title: "Radio",
+					class: "radio",
+					image: "../images/ToyComponents/radio.png",
+                    craft: {
+						number: 4,
+						points: 10,
+					},
+					floor: -6,
+					playType: "challenge",
+					color: "#228b22",
+                },
+           /*     {
+                    title: "Matryoshka",
+                    class: "matryoshka",
+					image: "../images/ToyComponents/matryoshka.png",
+                    craft: {
+						number: 4,
+						plus: true,
+						pointsPerCard: 2,
+					},
+					floor: -6,
+					playType: "challenge",
+					color: "#228b22",
+                },
+			*/
+                {
+                    title: "Reindeer Poop",
+                    class: "poop",
+					image: "../images/ToyComponents/poop.png",
+                    special: "No Crafting",
+					floor: -7,
+					playType: "special",
+					color: "#593002",
+                },
+                {
+                    title: "Wrapping Paper",
+                    class: "wrappingPaper",
+					image: "../images/ToyComponents/wrappingPaper.png",
+                    special: "x2",
+					floor: -2,
+					playType: "special",
+					color: "#FFD700",
+                },
+                {
+                    title: "Elf Magic",
+                    class: "elfMagic",
+					image: "../images/ToyComponents/elfMagic.png",
+					specialImages: [
+						"../images/ToyComponents/doll.png",
+						"../images/ToyComponents/kite.png",
+						"../images/ToyComponents/robot.png",
+					],
+					specialImagesSeparator: "/",
+					floor: -2,
+					playType: "special",
+					color: "#FFD700",
+                },
+                {
+                    title: "Broom",
+                    class: "broom",
+					image: "../images/ToyComponents/broom.png",
+					specialImages: [
+						"../images/ToyComponents/floor.png",
+						"../images/ToyComponents/rightArrow.png",
+						"../images/ToyComponents/floor.png",
+					],
+					floor: -2,
+					playType: "special",
+					color: "#FFD700",
+                },
+				/*
+                {
+                    title: "Gloves",
+                    class: "gloves",
+					image: "../images/ToyComponents/gloves.png",
+					specialImages: [
+						"../images/ToyComponents/floor.png",
+						"../images/ToyComponents/rightArrow.png",
+						"../images/ToyComponents/workbench.png",
+					],
+					floor: -10,
+					playType: "special",
+					color: "#FFD700",
+                },
+                {
+                    title: "Fruitcake",
+                    class: "fruitcake",
+					image: "../images/ToyComponents/fruitcake.png",
+					specialImages: [
+						"../images/ToyComponents/fruitcake.png",
+						"../images/ToyComponents/doubleArrow.png",
+						"card",
+					],
+					floor: -10,
+					playType: "special",
+					color: "#FFD700",
+                },*/
+            ]
+			function addToyComponentCard(parent, index) {
+				return toyComponentCards.addToyComponentCard(parent, index, ttsCards, toyComponentCardConfigs)
+			}
+
+			function addBack(parent, title, color, opt_configs) {
+				return toyComponentCards.addBack(parent, title, color, opt_configs)
+			}
+
+			var numToyParts = 0
+			for (var i = 0; i < toyComponentCardConfigs.length; i++) {
+				var numberPerPlayer = toyComponentCards.getCountOfCard(ttsCards, toyComponentCardConfigs[i])
+				numToyParts += numberPerPlayer
+			}
+
+			cards.addCards("Santa's Sweatshop", "#228b22", numToyParts, addToyComponentCard,  {
+            	ttsCards: ttsCards,
+				bigCards: true,
+				noBacks: noBacks,
+				addBackOverride: addBack,
+            })
+		});
+    </script>
+</body>
+
+</html>

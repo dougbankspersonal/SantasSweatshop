@@ -1,0 +1,32 @@
+.card.front.goal {
+	padding-top: 27px;
+	padding-bottom: 27px;
+	padding-left: 14px;
+	padding-right: 14px;
+}
+
+.card.front.goal div.title {
+	font-family: 'Courier';
+	font-weight: bold;
+	font-size: 20px;
+}
+
+.card.front.goal div.goal {
+	padding-top: 7px;
+	font-family: 'Courier';
+	font-style: italic;
+	font-size: 17px;
+}
+
+.card.front.goal div.points {
+	padding-top: 7px;
+	font-family: 'Courier';
+	font-weight: bold;
+	font-size: 17px;
+}
+
+.card.front.goal div.reward {
+	padding-top: 7px;
+	font-family: 'Courier';
+	font-size: 17px;
+}

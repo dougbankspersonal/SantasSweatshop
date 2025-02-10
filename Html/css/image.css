@@ -1,0 +1,90 @@
+div.pseudoImage {
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	height: 100%;
+	width: 100%;
+}
+
+div.pseudoImage.nutType.Almond {
+	background-image: url("../images/NutProps/Simple.Almond.png");
+}
+div.pseudoImage.nutType.Peanut {
+	background-image: url("../images/NutProps/Simple.Peanut.png");
+}
+div.pseudoImage.nutType.Cashew {
+	background-image: url("../images/NutProps/Simple.Cashew.png");
+}
+div.pseudoImage.nutType.Pistachio {
+	background-image: url("../images/NutProps/Simple.Pistachio.png");
+}
+
+div.pseudoImage.LeftArrow {
+	background-image: url("../images/Arrows/LeftArrow.png");
+}
+div.pseudoImage.RightArrow {
+	background-image: url("../images/Arrows/RightArrow.png");
+}
+div.pseudoImage.DoubleArrow {
+	background-image: url("../images/Arrows/DoubleArrow.png");
+}
+
+div.pseudoImage.LeftArrow {
+	background-image: url("../images/Arrows/LeftArrow.png");
+}
+div.pseudoImage.RightArrow {
+	background-image: url("../images/Arrows/RightArrow.png");
+}
+div.pseudoImage.DoubleArrow {
+	background-image: url("../images/Arrows/DoubleArrow.png");
+}
+
+div.pseudoImage.Salter {
+	background-image: url("../images/Markers/Salter.png");
+}
+
+div.pseudoImage.Squirrel {
+	background-image: url("../images/Markers/Squirrel.png");
+}
+
+div.pseudoImage.StartingPlayer {
+	background-image: url("../images/Markers/StartingPlayer.png");
+}
+
+div.pseudoImage.Heart {
+	background-image: url("../images/Markers/Heart.png");
+}
+
+div.pseudoImage.Skull {
+	background-image: url("../images/Markers/Skull.png");
+}
+
+div.pseudoImage.Star {
+	background-image: url("../images/Markers/Star.png");
+}
+
+.crossTile {
+    border-radius: 10px;
+	box-sizing: border-box;
+    display: inline-flex;
+	break-inside: avoid;
+	margin-left: 1px;
+	margin-top: 1px;
+	position: relative;
+	overflow:hidden;
+	background-image: url("../images/Factory/FloorBrick.png");
+}
+
+.demoBoard .crossTile {
+	z-index: 20;
+}
+
+.demoBoard .crossTile.ghost {
+	opacity: 0.4;
+}
+
+.crossTile.ghost .belt {
+	width: 100%;
+	height: 100%;
+	opacity: 0.4;
+}
