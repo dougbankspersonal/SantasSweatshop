@@ -77,7 +77,6 @@ local deckZPos = (numSeasons/2 * columnHeight) + columnHeight
 
 -- Is a game running?
 local gameIsRunning = false
-local loadingAllDone = false
 
 -- Deck
 local gameDeckGUID = nil
@@ -557,14 +556,10 @@ Application-specific UI functions.
 local function updateButtons()
     for buttonId, buttonFeatures in pairs(buttonFeaturesById) do
         local enabled
-        if not loadingAllDone then
-            enabled = false
+        if gameIsRunning then
+            enabled = buttonFeatures.enabledWhenRunning
         else
-            if gameIsRunning then
-                enabled = buttonFeatures.enabledWhenRunning
-            else
-                enabled = not buttonFeatures.enabledWhenRunning
-            end
+            enabled = not buttonFeatures.enabledWhenRunning
         end
         setButtonEnabled(buttonId, enabled)
     end
@@ -634,11 +629,11 @@ end
 Functions for laying out the cards for a round.
 ]]
 -- Place next card from given deck.
-local function placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, callback, opt_options)
+local function placeCardWhichMayChangeDeck(deck, numRows, rowIndex, columnIndex, cardsToDeal, callback, opt_options)
     local options = opt_options or {}
 
     local flip
-    if hideLastCard and cardPlacement.rowIndex == layoutDetails.cardsThisRow then
+    if options.hideLastCard and rowIndex == cardsToDeal then
         flip = false
     else
         flip = true
@@ -653,15 +648,15 @@ local function placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, c
     end
 
     if options.cardTwiddleCallback then
-        options.cardTwiddleCallback(card, cardPlacement.columnIndex)
+        options.cardTwiddleCallback(card, columnIndex)
     else
         card.addTag("dealtCard")
     end
 
 
     -- Where do we want card to move to, and what rotation?
-    local xPos = -rowWidth/2 + (rowWidth / (layoutDetails.cardsThisRow - 1)) * (cardPlacement.columnIndex-1)
-    local zPos = ((layoutDetails.numRows-1)/2 * columnHeight) - (columnHeight * (cardPlacement.rowIndex-1))
+    local xPos = -rowWidth/2 + (rowWidth / (cardsToDeal - 1)) * (columnIndex-1)
+    local zPos = ((numRows-1)/2 * columnHeight) - (columnHeight * (rowIndex-1))
 
     local position = Vector(xPos, dealYOffset, zPos)
 
@@ -674,26 +669,23 @@ end
 
 -- Recursive step to lay out the next card.
 -- Indices are one-based.
-local function recursivePlaceNextCard(deck, layoutDetails, cardPlacement, onAllCardsPlaced, opt_options)
+local function recursivePlaceNextCard(deck, numRows, rowIndex, columnIndex, cardsToDeal, callback, opt_options)
     -- Exit case.
-    if cardPlacement.columnIndex > layoutDetails.cardsThisRow then
-        onAllCardsPlaced(deck)
+    if columnIndex > cardsToDeal then
+        callback(1)
         return
     end
 
-    local function onCardPlaced(updatedDeck)
+    placeCardWhichMayChangeDeck(deck, numRows, rowIndex, columnIndex, cardsToDeal, function(updatedDeck)
         -- Wait a bit then deal the next card.
         Wait.time(function()
-            cardPlacement.columnIndex = cardPlacement.columnIndex + 1
-            recursivePlaceNextCard(updatedDeck, layoutDetails, cardPlacement, onAllCardsPlaced, opt_options)
+            columnIndex = columnIndex + 1
+            recursivePlaceNextCard(updatedDeck, numRows, rowIndex, columnIndex, cardsToDeal, callback, opt_options)
         end, waitAfterDealtCardMoveSec)
-    end
-
-    placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, onCardPlaced, opt_options)
+    end, opt_options)
 end
 
-local function placeCardsForSeason(deck, seasonIndex, callback)
-    print("placeCardsForSeason seasonIndex = ", seasonIndex)
+local function placeCardsForSeason(seasonIndex, callback)
     -- How many to deal?
     local cardsThisSeason = math.floor(numCardsInGameDeck / numSeasons)
 
@@ -705,22 +697,20 @@ local function placeCardsForSeason(deck, seasonIndex, callback)
             cardsThisSeason = cardsThisSeason + playerCount
         end
     end
-    print("placeCardsForSeason cardsThisSeason = ", cardsThisSeason)
+
+    local deck = getObjectFromGUID(deckGUID)
 
     if not deck then
-        callback(deck)
+        callback(0)
         return
     end
 
-    local layoutDetails = {
-        numRows = numSeasons,
-        cardsThisRow = cardsThisSeason,
-    }
-    local cardPlacement = {
-        rowIndex = seasonIndex,
-        columnIndex = 1,
-    }
-    recursivePlaceNextCard(deck, layoutDetails, cardPlacement, callback)
+    recursivePlaceNextCard(deck, numSeasons, seasonIndex, 1, cardsThisSeason, function()
+        -- All done dealing this row.  Do the next one.
+        placeCardsForSeason(seasonIndex + 1, callback)
+    end, {
+        hideLastCard = hideLastCard,
+    })
 end
 
 local function confirmCardNames()
@@ -846,41 +836,32 @@ end
 local flipAndShuffleDeck = function(deckGUID, callback)
     -- Flip the deck
     runAfterWaitThenCallback(standardWaitSec, function()
-        print("Doug: flipping...")
         flipDeck(deckGUID)
     end, function()
-        runAfterWaitThenCallback(waitAfterDeckFlipSec, function()
-            print("Doug: shuffling...")
+        -- Shuffle.
+        Wait.time(function()
             shuffleDeck(deckGUID)
-        end, function()
             Wait.time(function()
-                print("Doug: hitting callback...")
                 callback()
             end, waitAfterDeckShuffleSec)
-        end)
+        end, waitAfterDeckFlipSec)
     end)
 end
 
-local function recursivePlaceCardsForSeason(deck, seasonIndex, callback)
-    print("Doug: in recursivePlaceCardsForSeason 001")
-    print("Doug: in recursivePlaceCardsForSeason seasonIndex = ", seasonIndex)
+local function recursivePlaceCardsForSeason(seasonIndex, callback)
     -- Handle the end case: we are done.
     if seasonIndex > numSeasons then
-        print("Doug: in recursivePlaceCardsForSeason 002")
         callback()
         return
     end
 
     -- Deal the cards for this season.
-    print("Doug: in recursivePlaceCardsForSeason 003")
-    placeCardsForSeason(deck, seasonIndex, function(updatedDeck)
-        print("Doug: in recursivePlaceCardsForSeason 004")
+    placeCardsForSeason(seasonIndex, function()
         -- Wait a bit and repeat for the next season.
         Wait.time(function()
-            print("Doug: in recursivePlaceCardsForSeason 005")
             -- That season is resolved: increment.
             seasonIndex = seasonIndex + 1
-            recursivePlaceCardsForSeason(updatedDeck, seasonIndex, callback)
+            recursivePlaceCardsForSeason(seasonIndex, callback)
         end, waitAfterDealtCardMoveSec)
     end)
 end
@@ -904,10 +885,8 @@ local function onGameDeckCreated(gameDeck)
     creatingGameDeck = false
     -- Flip and shuffle the deck.
     flipAndShuffleDeck(gameDeckGUID, function()
-        print("Doug: in flipAndShuffleDeckCallback")
         -- Deal out all the seasons.
-        local deck = getObjectFromGUID(gameDeckGUID)
-        recursivePlaceCardsForSeason(deck, 1, function()
+        recursivePlaceCardsForSeason(1, function()
             -- Done dealing for all seasons...
         end)
     end)
@@ -1065,7 +1044,7 @@ local function getImportedDeck()
     return nil
 end
 
-local function makeDecksFromImportedCards(onSourceDecksCreated)
+local function makeDecksFromImportedCards(callback)
     local importedCards = getObjectsWithTag(importedCardTag)
 
     for _, importedCard in pairs(importedCards) do
@@ -1088,14 +1067,14 @@ local function makeDecksFromImportedCards(onSourceDecksCreated)
         end
     end
 
-    onSourceDecksCreated()
+    callback()
 end
 
-local function maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
+local function maybeMakeSourceDecksFromImportedDeck(callback)
     -- If source decks already exist, we are done.
     local sourceDecks = getObjectsWithTag(sourceDeckTag)
     if sourceDecks and #sourceDecks > 0 then
-        onSourceDecksCreated()
+        callback()
         return
     end
 
@@ -1105,33 +1084,21 @@ local function maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
     end
     local importedCardCount = importedDeck.getQuantity()
 
-    local function onAllCardsPlaced(_)
+    -- place cards from imported deck.
+    recursivePlaceNextCard(importedDeck, 1, 1, 1, importedCardCount, function()
         Wait.time(function()
             -- All the cards are out.
             -- Make decks out of them.
-            makeDecksFromImportedCards(onSourceDecksCreated)
+            makeDecksFromImportedCards(callback)
         end, 1)
-    end
-
-    local function cardTwiddleCallback(importedCard, index)
-        -- set tag on new card.
-        importedCard.addTag(importedCardTag)
-        importedCard.setName(orderedCardTypes[index])
-    end
-
-    -- place cards from imported deck.
-    local layoutDetails = {
-        numRows = 1,
-        cardsThisRow = importedCardCount,
-    }
-    local cardPlacement = {
-        rowIndex = 1,
-        columnIndex = 1,
-    }
-
-    recursivePlaceNextCard(importedDeck, layoutDetails, cardPlacement, onAllCardsPlaced, {
-        cardTwiddleCallback = cardTwiddleCallback,
+    end, {
+        cardTwiddleCallback = function(importedCard, index)
+            -- set tag on new card.
+            importedCard.addTag(importedCardTag)
+            importedCard.setName(orderedCardTypes[index + 1])
+        end,
     })
+
 end
 
 --[[
@@ -1139,6 +1106,7 @@ Functions called by system events.
 ]]
 -- The onLoad event is called after the game save finishes loading.
 function onLoad()
+    --[[
     -- Fill in some derived global tables/variables.
     fillInCardDistributionByNumPlayers()
     setMaxCardCount()
@@ -1149,16 +1117,13 @@ function onLoad()
     -- Do UI Setup
     setupUI()
 
-    local function onSourceDecksCreated()
+    maybeMakeSourceDecksFromImportedDeck(function()
         Wait.time(function()
             fillInCardTypeToSourceDeckGUID()
             confirmCardNames()
-            loadingAllDone = true
-            updateButtons()
         end, standardWaitSec * 2)
-    end
-
-    maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
+    end)
+    ]]
 end
 
 -- The onUpdate event is called once per frame.
