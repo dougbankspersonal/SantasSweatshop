@@ -4,7 +4,8 @@
         <Button class="HostButton" visibility="Host"  ignoreLayout="true"  color="rgb(0.3, 0.3, 0.3)"/>
         <Button class="PlayerButton" ignoreLayout="true" color="rgb(0.5, 0.5, 0.5)"/>
         /* cells */
-        <TableLayout class="TableLayoutClass" autoCalculateHeight="true" rectAlignment="LowerCenter" rowBackgroundColor="#00ff00"/>
+        <TableLayout class="FinalTallyTableLayoutClass" autoCalculateHeight="true" rectAlignment="LowerCenter" rowBackgroundColor="#00ff00"/>
+        <TableLayout class="BidViewTableLayoutClass" autoCalculateHeight="true" rectAlignment="LowerCenter" rowBackgroundColor="#ff0000"/>
         /* rows */
         <Row class="TextRowClass" dontUseTableRowBackground="true" />
         <Row class="InputRowClass" dontUseTableRowBackground="true" />
@@ -26,8 +27,8 @@
         <Text class="TitleTextClass" fontSize="24" fontStyle="Bold" color="#000000" rectAlignment="UpperCenter" textAlignment="UpperCenter" />
     </Defaults>
     /* Panels */
-    <Panel id="BottomButtonPanel" alignment="LowerCenter" rectAlignment="LowerCenter" height="300" width="2000">
-        <TableLayout id="BottomButtonTableLayout" width="90" height="90" cellSpacing="20"  rectAlignment="LowerCenter" cellBackgroundColor="rgba(0, 0, 0, 0)">
+    <Panel id="BottomButtonPanel" alignment="LowerCenter" rectAlignment="LowerCenter" height="100" width="2000" padding="10 10 10 10">
+        <TableLayout id="BottomButtonTableLayout" offsetXY="0 0" rectAlignment="LowerCenter" cellBackgroundColor="rgba(0, 0, 0, 0)">
             <Row id="BottomButtonRow1" class="ButtonTableRowClass">
                 <Cell><Button id="SetupButtonId" class="HostButton" onClick="setup">Setup Game</Button></Cell>
                 <Cell><Button id="CleanupButtonId" visibility="Host" class="HostButton" onClick="cleanup" text="Cleanup Game"/></Cell>
@@ -36,9 +37,10 @@
                 <Cell><Button id="ToggleFinalTallyPanelButtonId" visibility="Host" class="HostButton" onClick="toggleFinalTallyPanel" text="Toggle Scores"/></Cell>
             </Row>
             <Row id="BottomButtonRow2" class="ButtonTableRowClass">
-                <Cell columnSpan="5"><Button id="SetAndSubmitBidButton" class="PlayerButton" onClick="toggleBidInputPanel" text="Update Bid"/></Cell>
+                <Cell columnSpan="4"><Button id="SetAndSubmitBidButton" class="PlayerButton" onClick="toggleBidInputPanel" text="Update Bid"/></Cell>
             </Row>
         </TableLayout>
     </Panel>
-    <Panel id="FinalTallyPanel" class="PanelClass" active="false"/>
-    <Panel id="BidViewPanel" class="PanelClass" active="false"/>
+    <Panel id="FinalTallyPanel" class="PanelClass" active="true"/>
+    <Panel id="BidInputPanel" class="PanelClass" active="true"/>
+    <Panel id="BidViewPanel" class="PanelClass" active="true"/>
