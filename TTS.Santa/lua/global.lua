@@ -1623,11 +1623,11 @@ local function placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, o
 
     local pos = Vector(xPos, yPos, zPos)
 
-    local zRot = 0
+    local zRot = 180
     if flip then
-        zRot = 180
+        zRot = 0
     end
-    local rot = Vector(0, 0, zRot)
+    local rot = Vector(0, 180, zRot)
 
     runAfterWaitThenCallback(waitAfterDealtCardFlipSec, function()
         card.setRotation(rot)
@@ -2152,32 +2152,36 @@ end
         -- First we are going to make the buttons.
         configureBottomButtonLayout()
 
-        -- Then we are going to cache a notion of "pristine" XML: at game end
-        -- we reset to this.
-        pristineXml = UI.GetXmlTable();
+        -- Unfortunately it takes a bit for new XML to "settle".
+        Wait.time(function()
+            -- Now we cache a notion of "pristine" XML: at game end
+            -- we reset to this.
+            pristineXml = UI.GetXmlTable();
 
-        -- Now we can update the UI based on current state.
-        updateUIBasedOnCurrentState()
+            -- Now we can update the UI based on current state.
+            updateUIBasedOnCurrentState()
 
-        debugPrintTime("making source decks")
-        local function onSourceDecksCreated()
-            debugPrintTime("source decks created.")
-            Wait.time(function()
-                debugPrintTime("source decks created: waited.")
-                fillInCardTypeToSourceDeckGUID()
-                confirmCardNames()
-                debugPrint("StateMachine", "Doug: setting appState to CreatedSourceDecks")
-                setPrivateState({appState = appStates.CreatedSourceDecks})
-            end, standardWaitSec)
-        end
+            debugPrintTime("making source decks")
+            local function onSourceDecksCreated()
+                debugPrintTime("source decks created.")
+                Wait.time(function()
+                    debugPrintTime("source decks created: waited.")
+                    fillInCardTypeToSourceDeckGUID()
+                    confirmCardNames()
+                    debugPrint("StateMachine", "Doug: setting appState to CreatedSourceDecks")
+                    setPrivateState({appState = appStates.CreatedSourceDecks})
+                end, standardWaitSec)
+            end
 
-        -- FIXME(dbanks)
-        -- Remove the if.
-        if true then
-            maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
-        else
-            onSourceDecksCreated()
-        end
+            -- FIXME(dbanks)
+            -- Remove the if.
+            if true then
+                maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
+            else
+                onSourceDecksCreated()
+            end
+
+        end, standardWaitSec)
     end, standardWaitSec)
 end
 
