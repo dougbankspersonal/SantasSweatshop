@@ -13,6 +13,43 @@ constants and variables.
 --[[
 Enums
 ]]
+-- Flagged debug system.
+-- Keep these alphabetized.
+local activeDebugTags = {
+    BidInputPanel = false,
+    ButtonConfiguration = false,
+    GameDeckPlacement = true,
+    PanelVisibility = false,
+    SourceDeckCreation = false,
+    StateMachine = false,
+    Timing = false,
+    UIStateResponse = false,
+    XMLTableBuilding = false,
+}
+
+local appStates = {
+    Null = "Null",
+    Loaded = "Loaded",
+    CreatedSourceDecks = "CreatedSourceDecks",
+    SetupRunning = "SetupRunning",
+    CreatedAndDealtGameDeck = "CreatedAndDealtGameDeck",
+    GameRunning = "GameRunning",
+    CleanupRunning = "CleanupRunning",
+}
+
+local playerColors = {
+    "White",
+    "Brown",
+    "Red",
+    "Orange",
+    "Yellow",
+    "Green",
+    "Teal",
+    "Blue",
+    "Purple",
+    "Pink",
+}
+
 -- Enum of different deck and card types.
 local cardTypes = {
     doll = "doll",
@@ -40,7 +77,7 @@ local orderedCardTypes = {
 Twiddles for alternate game play.
 ]]
 -- Last card hidden.
-local hideLastCard = false
+local hideLastCard = true
 -- Variable season length
 local variableSeasonLength = false
 
@@ -101,7 +138,6 @@ local maxCardCount = 0
 -- Times
 local standardWaitSec = 0.5
 local waitAfterCardCloneSec = 0.07
-local waitAfterDeckFlipSec = 1
 local waitAfterDeckShuffleSec = 1
 local waitAfterDealtCardFlipSec = 0.2
 local waitAfterDealtCardMoveSec = 0.1
@@ -112,8 +148,9 @@ local handleInputWaitSec = 0.1
 -- Positions
 local cardRowWidth = 20
 local cardColumnHeight = 3.5
-local dealtCardYOffset = 1.5
-local hideYPos = -5
+local dealtCardBaseYPos = 1.5
+local dealtCardDeltaYPos = 0.1
+local hiddenDeckYPos = -5
 
 local finalTallyPanelStartXPos = -50
 local finalTallyPanelStartYPos = 0
@@ -152,7 +189,7 @@ local pristineXml = nil
 -- Ids, text for XML.
 local finalTallyPanelId = "FinalTallyPanel"
 local bidViewPanelId = "BidViewPanel"
-local bidInputPanelIdPrefix = "BidInputPanel"
+local bidInputPanelIdPrefix = "BidInputPanel_"
 
 -- Map from panelId to true.
 -- We have to add ids for bid input panels later when they are created (one per player).
@@ -203,7 +240,6 @@ local cleanupButtonId = "CleanupButtonId"
 local toggleBiddingOpenButtonId = "ToggleBiddingOpenButtonId"
 local toggleBidsPanelButtonId = "ToggleBidsViewPanelButtonId"
 local toggleFinalTallyPanelButtonId = "ToggleFinalTallyPanelButtonId"
-local setAndSubmitBidButtonId = "SetAndSubmitBidButton"
 
 -- Mapping buttons to details about when enabled and color.
 local bottomButtonIds = {
@@ -212,7 +248,6 @@ local bottomButtonIds = {
     toggleBiddingOpenButtonId,
     toggleBidsPanelButtonId,
     toggleFinalTallyPanelButtonId,
-    setAndSubmitBidButtonId,
 }
 
 local bottomRowIds = {
@@ -235,8 +270,11 @@ local finalTallySumRowIndex = nil
 -- modify you call a function, that function pings interested watchers.
 local _privateState = {
     _callbackIdGen = 1,
-    _callbacks = {},
-    _callbackEnqueued = false,
+
+    _uiCallbacks = {},
+    _uiCallbackEnqueued = false,
+
+    _stateModCallbacks = {},
 }
 
 
@@ -291,6 +329,12 @@ local function dump(blob, opt_params)
         if recursive and type(value) == "table" then
             dump(value, newParams)
         end
+    end
+end
+
+local function debugPrint(debugTag, ...)
+    if activeDebugTags[debugTag] then
+        print(debugTag .. ": ", ...)
     end
 end
 
@@ -384,14 +428,22 @@ end
 -- Returns a table with card and the deck: in TTS taking the second to last
 -- card from deck actually creates a new object for the remaining deck, a "deck" with one card).
 local function safeTakeFromDeck(deck)
+    debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: deck = ", deck.name)
     local card = deck.takeObject()
+    debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck after takeObject: card = ", card)
+    debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck after takeObject: deck = ", deck)
     if deck.remainder ~= nil then
+        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: deck.remainder = ", deck.remainder)
         deck = deck.remainder
     end
     if card == nil then
+        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: card is nil")
         return {card = deck, deck = nil}
+    else
+        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: card is ", card)
+        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: deck is ", deck)
+        return {card = card, deck = deck}
     end
-    return {card = card, deck = deck}
 end
 
 -- How many seated players?
@@ -410,26 +462,6 @@ local function resetDeck(deckGUID)
     return false
 end
 
--- Shortcut to shuffle a deck by GUID.
-local function shuffleDeck(deckGUID)
-    local deck = getObjectFromGUID(deckGUID)
-    if deck then
-        deck.randomize()
-        return true
-    end
-    return false
-end
-
--- Shortcut to flip a deck by GUID.
-local function flipDeck(deckGUID)
-    local deck = getObjectFromGUID(deckGUID)
-    if deck then
-        deck.flip()
-        return true
-    end
-    return false
-end
-
 --[[--------------------------
 
 Functions
@@ -442,61 +474,118 @@ local function declareValidState(stateName, initValue)
 end
 
 local function getPrivateState(stateName)
+    if _privateState[stateName] == nil then
+        debugPrint("StateMachine", "Error: getting invalid state with stateName = ", stateName)
+        assert(false, "Error: getting invalid state with stateName = " .. stateName)
+        return nil
+    end
     return _privateState[stateName]
 end
 
-local function setPrivateState(stateName, value, opt_onAllCallbackCalled)
-    -- Not allowed to use nil values.
-    if value == nil then
-        print("Error: setting nil state with stateName = ", stateName)
-        return false
+-- Write updates into the store.
+-- stateName: key for state being changed.
+-- value: value for the key.
+-- opt_onRegisteredCallbacksCalled: optional arg.  Once the state change has finished
+-- pinging all UI-related listners, this callback will be hit.
+local function setPrivateState(stateDictionary, opt_onRegisteredCallbacksCalled)
+    if stateDictionary.appState then
+        debugPrint("StateMachine", "Doug: called setPrivateState")
+        if activeDebugTags.StateMachine then
+            dump(stateDictionary)
+        end
     end
 
-    if _privateState[stateName] == nil then
-        print("Error: setting invalid state with stateName = ", stateName)
-        -- Nothing changed.
-        return false
+    local somethingChanged = false
+    for k, v in pairs(stateDictionary) do
+        if _privateState[k] == nil then
+            debugPrint("StateMachine", "Error: setting invalid state with k = ", k)
+            assert(false, "Error: setting invalid state with k = " .. k)
+            return false
+        end
+
+        -- Not allowed to use nil values.
+        if v == nil then
+            debugPrint("StateMachine", "Error: setting nil state with k = ", k)
+            assert(false, "Error: setting nil state with k = " .. k)
+            return false
+        end
+
+        if _privateState[k] ~= v then
+            _privateState[k] = v
+            somethingChanged = true
+        end
     end
 
-    if _privateState[stateName] == value then
-        -- Nothing changed.
-        return false
+    if not somethingChanged then
+        -- no-op:
+        if opt_onRegisteredCallbacksCalled then
+            opt_onRegisteredCallbacksCalled()
+        end
+        return
     end
-    _privateState[stateName] = value
 
-    -- If a bunch of things change at once we don't want to blast our listeners.
-    -- Iff there's not a callback enqueued, enqueue one.
-    if _privateState._callbackEnqueued then
+    -- allow for derived state mods.
+    for _, stateModCallback in pairs(_privateState._stateModCallbacks) do
+        _privateState = stateModCallback(_privateState)
+    end
+
+    -- It is very likely that a gang of state changes happen in a flurry.
+    -- We don't want or need to trigger UI updates for each little change:
+    -- Better to call at the end of the flurry.
+    -- So:
+    -- 1. We wait a bit before hitting UI callbacks.
+    -- 2. We mark that we're gonna hit the callbacks.  If that mark is set, we don't need
+    --    to enqueue more callbacks.
+    -- 3. When callbacks finally fire we unset the mark.
+    if _privateState._uiCallbackEnqueued then
         return true
     end
+    _privateState._uiCallbackEnqueued = true
 
-    _privateState._callbackEnqueued = true
     Wait.time(function()
-        for _, callback in pairs(_privateState._callbacks) do
-            callback()
+        --- Hit all the callbacks.
+        for _, uiCallback in pairs(_privateState._uiCallbacks) do
+            uiCallback(_privateState)
         end
-        _privateState._callbackEnqueued  = false
-        if opt_onAllCallbackCalled then
-            opt_onAllCallbackCalled()
+
+        _privateState._uiCallbackEnqueued  = false
+        if opt_onRegisteredCallbacksCalled then
+            opt_onRegisteredCallbacksCalled()
         end
     end, waitOnPrivateStateChange)
 
 end
 
-local function addStateChangedCallbackAndReturnCallbackId(callback)
+local function addStateChangedStateModCallback(stateModCallback)
     local id = _privateState._callbackIdGen
     _privateState.callbackIdGen = _privateState._callbackIdGen + 1
 
-    _privateState._callbacks[id] = callback
+    _privateState._stateModCallbacks[id] = stateModCallback
     return id
 end
 
-local function removeStateChangedCallback(callbackId)
-    if not _privateState._callbacks[callbackId] then
-        print("Error: called removeStateChangedCallback with invalid callbackId = ", callbackId)
+local function addStateChangedUIModCallback(uiCallback)
+    local id = _privateState._callbackIdGen
+    _privateState.callbackIdGen = _privateState._callbackIdGen + 1
+
+    _privateState._uiCallbacks[id] = uiCallback
+    return id
+end
+
+local function removeStateChangedUIModCallback(callbackId)
+    if not _privateState._uiCallbacks[callbackId] then
+        debugPrint("StateMachine", "Error: called removeStateChangedUIModCallback with invalid callbackId = ", callbackId)
         return
     end
-    _privateState._callbacks[callbackId] = nil
+    _privateState._uiCallbacks[callbackId] = nil
+end
+
+local function removeStateChangedStateModCallback(callbackId)
+    if not _privateState._stateModCallbacks[callbackId] then
+        debugPrint("StateMachine", "Error: called removeStateChangedStateModCallback with invalid callbackId = ", callbackId)
+        return
+    end
+    _privateState._stateModCallbacks[callbackId] = nil
 end
 
 
@@ -533,13 +622,13 @@ local function setTypedScoreByPlayerColor(playerColor, scoreInputCellName, score
         tsbpc[playerColor] = {}
     end
     tsbpc[playerColor][scoreInputCellName] = score
-    setPrivateState("typedScoresByPlayerColor", tsbpc)
+    setPrivateState({typedScoresByPlayerColor = tsbpc})
 end
 
 local function cleanupTypedScoresForPlayer(playerColor)
     local tsbpc = getPrivateState("typedScoresByPlayerColor")
     tsbpc[playerColor] = {}
-    setPrivateState("typedScoresByPlayerColor", tsbpc)
+    setPrivateState({typedScoresByPlayerColor = tsbpc})
 end
 
 local function getTotalScoreForPlayer(playerColor)
@@ -686,7 +775,7 @@ end
 local function makeXmlInputCell(inputIdPrefix, rowIndex, columnIndex, initValue, onEndEdit)
     -- inputIdPrefix should never be nil.
     if inputIdPrefix == nil then
-        print("inputIdPrefix is nil!!! rowIndex = ", rowIndex, " columnIndex = ", columnIndex)
+        debugPrint("XMLTableBuilding", "inputIdPrefix is nil!!! rowIndex = ", rowIndex, " columnIndex = ", columnIndex)
         return nil
     end
 
@@ -718,7 +807,71 @@ Functions
 Worry about the set of bottom buttons.
 
 ]] ---------------------------
-local buttonTextVariantsByButtonId = {
+ -- Button config.
+ -- For each button ID:
+ -- If there's an "enabled" function, we call that to see if button is
+ -- enabled or not.
+ -- If there's t/f text, the button may change its text:
+ --    If there's a "useTrueText" function, we call that to see if we should use the "t" text.
+ --    If there's a panelId, use the "t" text if panel is visible.
+ local bottomButtonConfigsByButtonId = {
+    [setupButtonId] = {
+        isEnabled = function()
+            debugPrint("ButtonConfiguration", "Doug: setupButtonId: isEnabled")
+            local appState = getPrivateState("appState")
+            debugPrint("ButtonConfiguration", "Doug: setupButtonId: appState = ", appState)
+            return appState == appStates.CreatedSourceDecks
+        end,
+    },
+    [cleanupButtonId] = {
+        isEnabled = function()
+            local appState = getPrivateState("appState")
+            return appState == appStates.GameRunning
+        end,
+    },
+    [toggleBiddingOpenButtonId] = {
+        isEnabled = function()
+            local appState = getPrivateState("appState")
+            return appState == appStates.GameRunning
+        end,
+        t = "Close Bidding",
+        f = "Open Bidding",
+        buttonTextConditionFunction = function()
+            local bio = getPrivateState("biddingIsOpen")
+            return bio
+        end,
+    },
+    [toggleBidsPanelButtonId] = {
+        isEnabled = function()
+            -- Not allowed if bidding is open.
+            local bio = getPrivateState("biddingIsOpen")
+            if bio then
+                return false
+            end
+            local appState = getPrivateState("appState")
+            return appState == appStates.GameRunning
+        end,
+        t = "Hide Bids",
+        f = "Show Bids",
+        panelId = bidViewPanelId,
+    },
+    [toggleFinalTallyPanelButtonId] = {
+        isEnabled = function()
+            local appState = getPrivateState("appState")
+            return appState == appStates.GameRunning
+        end,
+        t = "Hide Scoring",
+        f = "Show Scoring",
+        panelId = finalTallyPanelId,
+    },
+}
+
+ -- Interpretation:
+ -- This button has two possible text values, "true" and "false".
+ -- If there's a buttonTextConditionFunction, run the function:
+ -- use "t" text if function returns true.
+ -- If there's a panelId, use the "t" text if the panel is active.
+ local buttonTextVariantsByButtonId = {
     [toggleBiddingOpenButtonId] = {
         t = "Close Bidding",
         f = "Open Bidding",
@@ -730,57 +883,49 @@ local buttonTextVariantsByButtonId = {
     [toggleBidsPanelButtonId] = {
         t = "Hide Bids",
         f = "Show Bids",
+        panelId = bidViewPanelId,
     },
     [toggleFinalTallyPanelButtonId] = {
         t = "Hide Scoring",
         f = "Show Scoring",
-    },
-    [setAndSubmitBidButtonId] = {
-        t = "Submit bid",
-        f = "Set bid",
+        panelId = finalTallyPanelId,
     },
 }
 
 local function getBottomButtonRgb(buttonId)
-    if buttonId == setAndSubmitBidButtonId then
-        return {
-            r = 0.8,
-            g = 0.8,
-            b = 1,
-        }
-    else
-        return {
-            r = 1,
-            g = 1,
-            b = 1,
-        }
-    end
+    return {
+        r = 1,
+        g = 1,
+        b = 1,
+    }
 end
 
 -- Decide what the button's text should be based on current state and
 -- set text accordingly.
 -- State is digested into "condition".
 -- If "condition" is true we use the 't' variant, else the 'f'.
--- If there's a buttonTextConditionFunction, we call that to get the value of "condition".
--- Otherwise it turns on buttonEnabled.
-local function updateButtonText(buttonId, buttonEnabled)
+-- WE SHOULD ONLY LOOK AT STATE TO DETERMINE TEXT, not other UI truths.
+local function updateButtonText(buttonId)
+    debugPrint("ButtonConfiguration", "Doug: updateButtonText: buttonId = ", buttonId, " buttonEnabled = ", buttonEnabled)
     local buttonTextVariants = buttonTextVariantsByButtonId[buttonId]
 
     -- Not all buttons have varying text.
     if not buttonTextVariants then
         return
+        debugPrint("ButtonConfiguration", "Doug: updateButtonText: 001")
     end
 
-    local finalCondition = false
+    local useTrueText = false
+    -- If there's a condition function, use that.
     if buttonTextVariants.buttonTextConditionFunction then
-        finalCondition = buttonTextVariants.buttonTextConditionFunction()
-    else
-        if buttonEnabled then
-            finalCondition = buttonEnabled
-        end
+        useTrueText = buttonTextVariants.buttonTextConditionFunction()
+        debugPrint("ButtonConfiguration", "Doug: updateButtonText: 002 finalCondition = ", useTrueText)
+    elseif buttonTextVariants.panelId then
+        -- If panel is open, use the true text.
+        local useTrueText = UI.getAttribute(buttonTextVariants.panelId, "active")
     end
 
-    if finalCondition then
+    if useTrueText then
         UI.setAttribute(buttonId, "text", buttonTextVariants.t)
     else
         UI.setAttribute(buttonId, "text", buttonTextVariants.f)
@@ -788,42 +933,11 @@ local function updateButtonText(buttonId, buttonEnabled)
 end
 
 local function isBottomButtonEnabled(buttonId)
-    local lad = getPrivateState("loadingAllDone")
-    if not lad then
-        return false
-    end
-
-    local gir = getPrivateState("gameIsRunning")
-    if not gir then
-        if buttonId == setupButtonId then
-            return true
-        else
-            return false
-        end
-    end
-
-    -- So game is running.
-    if buttonId == setupButtonId then
-        return false
-    end
-
-    -- Game is running.
-    -- Deal with special cases.
-    -- Users can't submit bids unless bidding is open.
-    if buttonId == setAndSubmitBidButtonId then
-        local bio = getPrivateState("biddingIsOpen")
-        -- Enabled iff bidding is open.
-        return bio
-    end
-
-    -- Host cannot show bids while bidding is open.
-    if buttonId == setAndSubmitBidButtonId then
-        local bio = getPrivateState("biddingIsOpen")
-        -- Enabled iff bidding is closed.
-        return not bio
-    end
-
-    return true
+    -- Just ask the config beast.
+    local buttonConfig = bottomButtonConfigsByButtonId[buttonId]
+    assert(buttonConfig, "Missing buttonConfig for buttonId = " .. buttonId)
+    assert(buttonConfig.isEnabled, "Missing buttonConfig.isEnabled for buttonId = " .. buttonId)
+    return buttonConfig.isEnabled()
 end
 
 -- Changes the color, adds/removes an on-click function.
@@ -994,7 +1108,8 @@ end
 -- Find the XML bit for the final tally panel.
 -- It's just a stub in the XML file.
 -- Fill it in.
-local function createFinalTallyPanel(currentXml)
+-- Note it returns the final/updated XML.
+local function fillInFinalTallyPanel(currentXml)
     local panel = findXmlNodeWithID(currentXml, finalTallyPanelId)
 
     -- Remove any existing kids.
@@ -1082,13 +1197,13 @@ local function setBidDetailByPlayerColor(playerColor, bidDetailType, number)
     end
     bdbpc[playerColor][bidDetailType] = number
 
-    setPrivateState("bidDetailsByPlayerColor", bdbpc)
+    setPrivateState({bidDetailsByPlayerColor = bdbpc})
 end
 
 local function cleanupBidDetailsForPlayer(playerColor)
     local bdbpc = getPrivateState("bidDetailsByPlayerColor")
     bdbpc[playerColor] = {}
-    setPrivateState("bidDetailsByPlayerColor", bdbpc)
+    setPrivateState({bidDetailsByPlayerColor = bdbpc})
 end
 
 --[[--------------------------
@@ -1151,27 +1266,11 @@ local function makePlayerBidInfoRow(rowIndex, seatedPlayerObject)
     return xmlRow
 end
 
-local function makeBidInputRow(rowIndex, seatedPlayerObject)
-    local xmlRow = makeXmlRow(rowIndex, "InputRowClass")
-
-    -- One cell for each bid detail type.
-    local columnIndex = 1
-    for _, bidDetailType in pairs(bidDetailTypes) do
-        local bidForCell = getBidDetailByPlayerColor(seatedPlayerObject.color, bidDetailType)
-        local inputIdPrefix = makeCellElementIdPrefx("BidInput", seatedPlayerObject.color, bidDetailType)
-        local xmlInputCell = makeXmlInputCell(inputIdPrefix, rowIndex, columnIndex, tostring(bidForCell), "onBidInputCellUpdated")
-        columnIndex = columnIndex + 1
-        safeAddToXmlChildren(xmlRow, xmlInputCell)
-    end
-    return xmlRow
-end
-
--- Make bid view inside given XML.
--- Currently just a stub.
+-- Find the XML bit for the "here's all the bids" panel.
+-- It's just a stub in the XML file.
 -- Fill it in.
--- Returns the modified XML BUT KEEP IN MIND the argument passed in is being modified itself.
--- Like returning is just kinda for clarity/convenience.
-local function createBidViewPanel(currentXml)
+-- Note it returns the final/updated XML.
+local function fillInBidViewPanel(currentXml)
     local panel = findXmlNodeWithID(currentXml, bidViewPanelId)
     -- Remove any existing kids.
     removeXmlChildren(panel)
@@ -1221,40 +1320,58 @@ local function createBidViewPanel(currentXml)
     return currentXml
 end
 
+--[[--------------------------
+
+Functions
+Making the panels where players input bid info.
+Note panels, plural: one for each player.
+I am very confused/frustrated with how to make local UI work in this system.
+
+]] ---------------------------
 local function makeBidInputPanelIdForPlayer(color)
-    return bidInputPanelIdPrefix .. "_" .. color
+    return bidInputPanelIdPrefix .. color
 end
 
--- add a bidInputPanel custom to this player.
-local function createBidInputPanel(currentXml, seatedPlayerObject)
+local function makeBidInputRow(rowIndex, seatedPlayerObject)
+    local xmlRow = makeXmlRow(rowIndex, "InputRowClass")
+
+    -- One cell for each bid detail type.
+    local columnIndex = 1
+    for _, bidDetailType in pairs(bidDetailTypes) do
+        local bidForCell = getBidDetailByPlayerColor(seatedPlayerObject.color, bidDetailType)
+        local inputIdPrefix = makeCellElementIdPrefx("BidInput", seatedPlayerObject.color, bidDetailType)
+        local xmlInputCell = makeXmlInputCell(inputIdPrefix, rowIndex, columnIndex, tostring(bidForCell), "onBidInputCellUpdated")
+        columnIndex = columnIndex + 1
+        safeAddToXmlChildren(xmlRow, xmlInputCell)
+    end
+    return xmlRow
+end
+
+-- Find the XML bit for the "player X can input his bid" panel.
+-- It's just a stub in the XML file.
+-- Fill it in.
+-- Note it returns the final/updated XML.
+local function fillInBidInputPanelForPlayer(currentXml, seatedPlayerObject)
     local panelId = makeBidInputPanelIdForPlayer(seatedPlayerObject.color)
 
     -- Keep track of this.
     allPanelIdsSet[panelId] = true
 
-    -- Make a panel with this id.
-    -- FIXME(dbanks): should be "false" always.
-    local active
-    if seatedPlayerObject.color == "White" then
-        active = "true"
-    else
-        active = "false"
-    end
+    -- Get the panel with this id.
+    local panel = findXmlNodeWithID(currentXml, bidViewPanelId)
+    -- Remove any existing kids.
+    removeXmlChildren(panel)
 
     local panelWidth = tableLabelCellWidth + tableContentCellWidth * #bidDetailTypes
     local panelHeight = tableTitleRowHeight + tableStandardRowHeight * 2
 
-    local panel = makeXmlNode("Panel", {
-        class = "PanelClass",
-        id = panelId,
-        active = active,
+    safeAddToXmlAttributes(panel, {
         height = tostring(panelHeight),
         width = tostring(panelWidth),
         offsetXY = tostring(bidInputPanelStartXPos) .. " " .. tostring(bidInputPanelStartYPos),
-        --- Visible only to the owning player.
+        -- visible only to this player.
         visibility = seatedPlayerObject.color,
     })
-    safeAddToXmlChildren(currentXml, panel)
 
     -- Column widths: width of label column then one std width bid detail type.
     local columnWidths = tostring(tableLabelCellWidth)
@@ -1287,278 +1404,13 @@ local function createBidInputPanel(currentXml, seatedPlayerObject)
     return currentXml
 end
 
---[[
-Functions for laying out the cards for a round.
-]]
--- Place next card from given deck.
-local function placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, callback, opt_options)
-    local options = opt_options or {}
+--[[--------------------------
 
-    local flip
-    if hideLastCard and cardPlacement.rowIndex == layoutDetails.cardsThisRow then
-        flip = false
-    else
-        flip = true
-    end
+Functions
+Create the game deck.
+Flip and shuffle it.
 
-    local result = safeTakeFromDeck(deck)
-    local updatedDeck = result.deck
-    local card = result.card
-
-    if flip then
-        card.flip()
-    end
-
-    if options.cardTwiddleCallback then
-        options.cardTwiddleCallback(card, cardPlacement.columnIndex)
-    else
-        card.addTag("dealtCard")
-    end
-
-
-    -- Where do we want card to move to, and what rotation?
-    local xPos = -cardRowWidth/2 + (cardRowWidth / (layoutDetails.cardsThisRow - 1)) * (cardPlacement.columnIndex-1)
-    local zPos = ((layoutDetails.numRows-1)/2 * cardColumnHeight) - (cardColumnHeight * (cardPlacement.rowIndex-1))
-
-    local position = Vector(xPos, dealtCardYOffset, zPos)
-
-    runAfterWaitThenCallback(waitAfterDealtCardFlipSec, function()
-        card.setPositionSmooth(position)
-    end, function()
-        callback(updatedDeck)
-    end)
-end
-
--- Recursive step to lay out the next card.
--- Indices are one-based.
-local function recursivePlaceNextCard(deck, layoutDetails, cardPlacement, onAllCardsPlaced, opt_options)
-    -- Exit case.
-    if cardPlacement.columnIndex > layoutDetails.cardsThisRow then
-        onAllCardsPlaced(deck)
-        return
-    end
-
-    local function onCardPlaced(updatedDeck)
-        -- Wait a bit then deal the next card.
-        Wait.time(function()
-            cardPlacement.columnIndex = cardPlacement.columnIndex + 1
-            recursivePlaceNextCard(updatedDeck, layoutDetails, cardPlacement, onAllCardsPlaced, opt_options)
-        end, waitAfterDealtCardMoveSec)
-    end
-
-    placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, onCardPlaced, opt_options)
-end
-
-local function placeCardsForSeason(deck, seasonIndex, callback)
-    print("placeCardsForSeason seasonIndex = ", seasonIndex)
-    -- How many to deal?
-    local cardsThisSeason = math.floor(numCardsInGameDeck / numSeasons)
-
-    if variableSeasonLength then
-        local playerCount = getSeatedPlayerCount()
-        if seasonIndex == 1 then
-            cardsThisSeason = cardsThisSeason - playerCount
-        elseif seasonIndex == numSeasons then
-            cardsThisSeason = cardsThisSeason + playerCount
-        end
-    end
-    print("placeCardsForSeason cardsThisSeason = ", cardsThisSeason)
-
-    if not deck then
-        callback(deck)
-        return
-    end
-
-    local layoutDetails = {
-        numRows = numSeasons,
-        cardsThisRow = cardsThisSeason,
-    }
-    local cardPlacement = {
-        rowIndex = seasonIndex,
-        columnIndex = 1,
-    }
-    recursivePlaceNextCard(deck, layoutDetails, cardPlacement, callback)
-end
-
-local function confirmCardNames()
-    for cardType, sourceDeckGUID in pairs(cardTypeToSourceDeckGUID) do
-        local sourceDeck = getObjectFromGUID(sourceDeckGUID)
-        local expectCardName = cardType
-        local objects = sourceDeck.getObjects()
-        for _, card in pairs(objects) do
-            if card.name ~= expectCardName then
-                break
-            end
-        end
-    end
-end
-
---[[
-Local functions for creation of the game deck.
-]]
--- Move the source card decks offscreen
-local function hideSourceDecks()
-    for _, deckGUID in pairs(cardTypeToSourceDeckGUID) do
-        local sourceDeck = getObjectFromGUID(deckGUID)
-        local position = sourceDeck.getPosition()
-        position.y = hideYPos
-        sourceDeck.setPosition(position)
-        sourceDeck.setLock(true)
-    end
-end
-
--- We have build the main game deck.  Cleanup any mess, find the main deck, and pass it back
--- thru the callback.
-local function cleanupClonesAndPassBackGameDeck(callback)
-    -- First, nuke all the cloned decks.
-    local cloneDecks = getObjectsWithTag(cloneTag)
-    for _, cloneDeck in pairs(cloneDecks) do
-        cloneDeck.destruct()
-    end
-
-    -- Find the game deck we created, pass it through the final callback.
-    local decks = getObjectsWithTag(gameDeckTag)
-    -- Should be exactly one.
-    if #decks == 1 then
-        local gameDeck = decks[1]
-        callback(gameDeck)
-    else
-        print("Error, did not find exactly one gameDeck: got ", #decks)
-        callback(nil)
-    end
-end
-
--- We have a description of a source deck and the number of cards we want to take from it.
--- We will:
--- 1. Clone the source deck (so we don't have to put cards back later).
--- 2. Grab cards from the clone and add to source deck.
--- Later, it will be the callers responsibility to destroy any clones created here.
-local function cloneSourceDeckAndAddCardsToGameDeck(sourceDeckWithNumCards)
-    local sourceDeck = sourceDeckWithNumCards.sourceDeck
-    local numCards = sourceDeckWithNumCards.numCards
-
-    -- OK this is pretty weaksauce but here we are.
-    -- If we take card from the actual source deck, we have to put them back when
-    -- game is over, which is a headache.
-    -- If source deck is not pre-existing, I have to clone a gang of cards each time we reset game,
-    -- which makes irritating boop noise.
-    -- So I clone the whole deck, pull cards from clone, and later (outside this function) destroy the clone.
-    local cloneOfSourceDeck = sourceDeck.clone()
-    local sourceDeckPosition = sourceDeck.getPosition()
-    local cloneDeckPosition = sourceDeckPosition
-    cloneDeckPosition.y = cloneDeckPosition.y + hideYPos
-    cloneOfSourceDeck.setPosition(cloneDeckPosition)
-
-    -- Clarify tags.
-    cloneOfSourceDeck.removeTag(sourceDeckTag)
-    cloneOfSourceDeck.addTag(cloneTag)
-
-    -- Grab this many cards from cloned deck.
-    local takenObject
-    if numCards == 1 then
-        local result = safeTakeFromDeck(cloneOfSourceDeck)
-        takenObject = result.card
-        cloneOfSourceDeck = result.deck
-    else
-        local splitDecks = cloneOfSourceDeck.cut(numCards)
-        takenObject = splitDecks[2]
-    end
-
-    -- No longer a clone:, this is part of gameDeck.
-    takenObject.removeTag(cloneTag)
-    takenObject.addTag(gameDeckTag)
-    -- Not locked...
-    takenObject.setLock(false)
-    -- Place well above the middle of table: it will drop onto any cards previously
-    -- placed and join to add to new deck.
-    takenObject.setPosition({0, 2, gameDeckZPos})
-    takenObject.setRotation({0, 180, 0})
-end
-
--- We have a description of which source decks we are using and how many from each deck to build
--- the game deck.
-local function recursiveGetCardsFromNextSourceDeck(sourceDecksWithNumCards, sourceDeckIndex, finalCallback)
-    -- Handle the end case: we are done.
-    if sourceDeckIndex > #sourceDecksWithNumCards then
-        Wait.time(function()
-            cleanupClonesAndPassBackGameDeck(finalCallback)
-        end, standardWaitSec)
-        return
-    end
-
-    local sourceDeckWithNumCards = sourceDecksWithNumCards[sourceDeckIndex]
-    cloneSourceDeckAndAddCardsToGameDeck(sourceDeckWithNumCards)
-    -- That source deck is resolved: increment.
-    sourceDeckIndex = sourceDeckIndex + 1
-    -- Wait a bit and repeat for the next deck.
-    Wait.time(function()
-        recursiveGetCardsFromNextSourceDeck(sourceDecksWithNumCards, sourceDeckIndex, finalCallback)
-    end, waitAfterCardCloneSec)
-end
-
-local flipAndShuffleDeck = function(deckGUID, callback)
-    -- Flip the deck
-    runAfterWaitThenCallback(standardWaitSec, function()
-        flipDeck(deckGUID)
-    end, function()
-        runAfterWaitThenCallback(waitAfterDeckFlipSec, function()
-            shuffleDeck(deckGUID)
-        end, function()
-            Wait.time(function()
-                callback()
-            end, waitAfterDeckShuffleSec)
-        end)
-    end)
-end
-
-local function recursivePlaceCardsForSeason(deck, seasonIndex, callback)
-    -- Handle the end case: we are done.
-    if seasonIndex > numSeasons then
-        callback()
-        return
-    end
-
-    -- Deal the cards for this season.
-    placeCardsForSeason(deck, seasonIndex, function(updatedDeck)
-        -- Wait a bit and repeat for the next season.
-        Wait.time(function()
-            -- That season is resolved: increment.
-            seasonIndex = seasonIndex + 1
-            recursivePlaceCardsForSeason(updatedDeck, seasonIndex, callback)
-        end, waitAfterDealtCardMoveSec)
-    end)
-end
-
--- This will be called once the game deck has been created.
-local function onGameDeckCreated(gameDeck)
-    if not gameDeck then
-        -- Uh oh.
-        return
-    end
-
-    -- Tweak some values...
-    -- Update the name and tags.
-    gameDeck.setName("GameDeck")
-
-    -- Remember some values...
-    gameDeckGUID = gameDeck.getGUID()
-    numCardsInGameDeck = gameDeck.getQuantity()
-
-    -- Done creating the deck.
-    setPrivateState("creatingGameDeck", false)
-    -- Flip and shuffle the deck.
-    flipAndShuffleDeck(gameDeckGUID, function()
-        -- Deal out all the seasons.
-        local deck = getObjectFromGUID(gameDeckGUID)
-        recursivePlaceCardsForSeason(deck, 1, function()
-            -- Done dealing for all seasons...
-        end)
-    end)
-
-    -- Done creating the deck.
-    setPrivateState("creatingGameDeck", false)
-end
-
+]] ---------------------------
 -- Given the number of players and the card decks are using this game, get array of
 -- {sourceDeck, numCards} pairs describing all the cards we will be using to build
 -- the main game deck.
@@ -1584,59 +1436,299 @@ local function getSourceDecksWithNumCards()
     return sourceDecksWithNumCards
 end
 
---[[
-Functions called once the game is loaded.
-]]
-local function fillInCardTypeToSourceDeckGUID()
-    cardTypeToSourceDeckGUID = {}
-    local sourceDecks = getObjectsWithTag(sourceDeckTag)
-    if not sourceDecks then
-        print(("fillInCardTypeToSourceDeckGUID: sourceDecks is nil"))
-        return
+-- We have build the main game deck.  Cleanup any mess, find the main deck, and pass it back
+-- thru the callback.
+local function cleanupClonesAndPassBackGameDeck(onGameDeckPrepped)
+    -- First, nuke all the cloned decks.
+    local cloneDecks = getObjectsWithTag(cloneTag)
+    for _, cloneDeck in pairs(cloneDecks) do
+        cloneDeck.destruct()
     end
-    if #sourceDecks == 0 then
-        print(("fillInCardTypeToSourceDeckGUID: sourceDecks is empty"))
-        return
-    end
-    for _, cardType in pairs(cardTypes) do
-        for _, sourceDeck in pairs(sourceDecks) do
-            if sourceDeck.getName() == cardType then
-                cardTypeToSourceDeckGUID[cardType] = sourceDeck.getGUID()
-            end
-        end
+
+    -- Find the game deck we created, pass it through the final callback.
+    local decks = getObjectsWithTag(gameDeckTag)
+    -- Should be exactly one.
+    if #decks == 1 then
+        local gameDeck = decks[1]
+        onGameDeckPrepped(gameDeck)
+    else
+        print("Doug: Error, did not find exactly one gameDeck: got ", #decks)
+        onGameDeckPrepped(nil)
     end
 end
 
---[[
-Setup/cleanup functions.
-]]
-local function cleanupOldGame()
-    -- Reset XML to pristine.
-    UI.setXmlTable(pristineXml)
+-- We have a description of a source deck and the number of cards we want to take from it.
+-- We will:
+-- 1. Clone the source deck (so we don't have to put cards back later).
+-- 2. Grab cards from the clone and add to source deck.
+-- Later, it will be the callers responsibility to destroy any clones created here.
+local function cloneSourceDeckAndAddCardsToGameDeck(sourceDeckWithNumCards)
+    local sourceDeck = sourceDeckWithNumCards.sourceDeck
+    local numCards = sourceDeckWithNumCards.numCards
 
-    -- Kill the game deck.  Kill any card that was dealt.
-    if gameDeckGUID then
-        local gameDeck = getObjectFromGUID(gameDeckGUID)
-        gameDeck.destruct()
-        gameDeckGUID = nil
-
-        local dealtCards = getObjectsWithTag("dealtCard")
-        for _, dealtCard in pairs(dealtCards) do
-            dealtCard.destruct()
-        end
+    if not sourceDeck then
+        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: sourceDeck is missing, early out")
+        return false
     end
 
-    -- Reset storage.
-    local seatedPlayerObjects = getSeatedPlayerObjects()
-    for _, seatedPlayerObject in pairs(seatedPlayerObjects) do
-        cleanupTypedScoresForPlayer(seatedPlayerObject.color)
-        cleanupBidDetailsForPlayer(seatedPlayerObject.color)
+    -- OK this is pretty weaksauce but here we are.
+    -- If we take card from the actual source deck, we have to put them back when
+    -- game is over, which is a headache.
+    -- If source deck is not pre-existing, I have to clone a gang of cards each time we reset game,
+    -- which makes irritating boop noise.
+    -- So I clone the whole deck, pull cards from clone, and later (outside this function) destroy the clone.
+    local cloneOfSourceDeck = sourceDeck.clone()
+    local sourceDeckPosition = sourceDeck.getPosition()
+    local cloneDeckPosition = sourceDeckPosition
+    cloneDeckPosition.y = cloneDeckPosition.y + hiddenDeckYPos
+    cloneOfSourceDeck.setPosition(cloneDeckPosition)
+
+    -- Clarify tags.
+    cloneOfSourceDeck.removeTag(sourceDeckTag)
+    cloneOfSourceDeck.addTag(cloneTag)
+
+    -- Grab this many cards from cloned deck.
+    local takenObject
+    if numCards == 1 then
+        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: deck = ", cloneOfSourceDeck)
+        local result = safeTakeFromDeck(cloneOfSourceDeck)
+        takenObject = result.card
+        cloneOfSourceDeck = result.deck
+        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: takenObject = ", takenObject)
+        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: cloneOfSourceDeck = ", cloneOfSourceDeck)
+
+    else
+        local splitDecks = cloneOfSourceDeck.cut(numCards)
+        takenObject = splitDecks[2]
     end
+
+    -- No longer a clone:, this is part of gameDeck.
+    takenObject.removeTag(cloneTag)
+    takenObject.addTag(gameDeckTag)
+    -- Not locked...
+    takenObject.setLock(false)
+    -- Place well above the middle of table: it will drop onto any cards previously
+    -- placed and join to add to new deck.
+    takenObject.setPosition({0, 2, gameDeckZPos})
+    takenObject.setRotation({0, 180, 0})
+    return true
 end
 
---[[
-Functions to init global tables/variables.
-]]
+-- We have a description of which source decks we are using and how many from each deck to build
+-- the game deck.
+local function recursiveGetCardsFromNextSourceDeck(sourceDecksWithNumCards, sourceDeckIndex, onGameDeckPrepped)
+    -- Handle the end case: we are done.
+    if sourceDeckIndex > #sourceDecksWithNumCards then
+        Wait.time(function()
+            cleanupClonesAndPassBackGameDeck(onGameDeckPrepped)
+        end, standardWaitSec)
+        return
+    end
+
+    local sourceDeckWithNumCards = sourceDecksWithNumCards[sourceDeckIndex]
+    cloneSourceDeckAndAddCardsToGameDeck(sourceDeckWithNumCards)
+    -- That source deck is resolved: increment.
+    sourceDeckIndex = sourceDeckIndex + 1
+    -- Wait a bit and repeat for the next deck.
+    Wait.time(function()
+        recursiveGetCardsFromNextSourceDeck(sourceDecksWithNumCards, sourceDeckIndex, onGameDeckPrepped)
+    end, waitAfterCardCloneSec)
+end
+
+local function flipAndShuffleDeck(gameDeck, onFlippedAndShuffled)
+    -- Flip the deck
+    Wait.time(function()
+        gameDeck.flip()
+        gameDeck.randomize()
+        onFlippedAndShuffled()
+    end, waitAfterDeckShuffleSec)
+end
+
+local function createFlipAndShuffleGameDeck(onGameDeckPrepped)
+    -- Only valid to move here from SetupRunning state.
+    local appState = getPrivateState("appState")
+    if appState ~= appStates.SetupRunning then
+        assert(false, "Invalid state transition in createGameDeckAndDealSeasons from " .. appState)
+        return 1
+    end
+
+    local sourceDecksWithNumCards = getSourceDecksWithNumCards()
+    gameDeckGUID = nil
+    recursiveGetCardsFromNextSourceDeck(sourceDecksWithNumCards, 1, function(gameDeck)
+        assert(gameDeck, "finalGameDeckChecksAndTwiddles: gameDeck is nil")
+        if not gameDeck then
+            return
+        end
+
+        -- Tweak some values...
+        -- Update the name
+        gameDeck.setName("GameDeck")
+        -- Remember some values...
+        gameDeckGUID = gameDeck.getGUID()
+        numCardsInGameDeck = gameDeck.getQuantity()
+
+        -- Flip and shuffle.
+        flipAndShuffleDeck(gameDeck, function()
+            onGameDeckPrepped(gameDeck)
+        end)
+    end)
+end
+
+--[[--------------------------
+
+Functions
+Generic util for drawing cards from a deck and laying them out in a line.
+
+]] ---------------------------
+-- Place next card from given deck.
+local function placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, onCardPlaced, opt_options)
+    debugPrint("SourceDeckCreation", "Doug: placeCardWhichMayChangeDeck: deck = ", deck)
+
+    local options = opt_options or {}
+
+    local flip
+    if hideLastCard and cardPlacement.columnIndex == 1 then
+        flip = false
+    else
+        flip = true
+    end
+    debugPrint("GameDeckPlacement", "Doug: placeCardWhichMayChangeDeck: flip = ", flip)
+
+    local result = safeTakeFromDeck(deck)
+
+    local updatedDeck = result.deck
+    local card = result.card
+    debugPrint("SourceDeckCreation", "Doug: placeCardWhichMayChangeDeck: card = ", card)
+    debugPrint("SourceDeckCreation", "Doug: placeCardWhichMayChangeDeck: updatedDeck = ", updatedDeck)
+    if options.cardTwiddleCallback then
+        options.cardTwiddleCallback(card, cardPlacement.columnIndex)
+    else
+        card.addTag("dealtCard")
+    end
+
+    -- Where do we want card to move to, and what rotation?
+    -- A bit of trickery here.
+    -- If we lay cards out left to right, in order, the nth card is hidden under N+1 card.  Only last card is fully visible.
+    -- Nicer to have the first card fully visible.
+    -- So when "columnIndex" is 1, we are actually going to go right to left instead of left to
+    -- right, so that the last card placed is on the far left and fully visible.
+    -- Normally the first card has columnIndex 1 and the last has columnIndex cardsThisRow.
+    -- We need to rejigger that.
+    -- Also: we want the cards to layer nicely so as column index does up we give a little pop to
+    -- the y value.
+    local mockColumnIndex = layoutDetails.cardsThisRow - cardPlacement.columnIndex + 1
+    local xPos = -cardRowWidth/2 + (cardRowWidth / (layoutDetails.cardsThisRow - 1)) * (mockColumnIndex-1)
+    local yPos = dealtCardBaseYPos + (cardPlacement.columnIndex - 1) * dealtCardDeltaYPos
+    local zPos = ((layoutDetails.numRows-1)/2 * cardColumnHeight) - (cardColumnHeight * (cardPlacement.rowIndex-1))
+
+    local pos = Vector(xPos, yPos, zPos)
+
+    local zRot = 0
+    if flip then
+        zRot = 180
+    end
+    local rot = Vector(0, 0, zRot)
+
+    runAfterWaitThenCallback(waitAfterDealtCardFlipSec, function()
+        card.setRotation(rot)
+        card.setPosition(pos)
+    end, function()
+        onCardPlaced(updatedDeck)
+    end)
+end
+
+-- Recursive step to lay out the next card.
+-- Indices are one-based.
+local function recursivePlaceNextCard(deck, layoutDetails, cardPlacement, onAllCardsPlaced, opt_options)
+    debugPrint("SourceDeckCreation", "Doug: recursivePlaceNextCard: deck = ", deck)
+    -- Exit case.
+    if cardPlacement.columnIndex > layoutDetails.cardsThisRow then
+        onAllCardsPlaced(deck)
+        return
+    end
+
+    local function onCardPlaced(updatedDeck)
+        -- Wait a bit then deal the next card.
+        Wait.time(function()
+            cardPlacement.columnIndex = cardPlacement.columnIndex + 1
+            recursivePlaceNextCard(updatedDeck, layoutDetails, cardPlacement, onAllCardsPlaced, opt_options)
+        end, waitAfterDealtCardMoveSec)
+    end
+
+    placeCardWhichMayChangeDeck(deck, layoutDetails, cardPlacement, onCardPlaced, opt_options)
+end
+
+--[[--------------------------
+
+Functions
+Deal all the seasons from the game deck.
+
+]] ---------------------------
+local function placeCardsForSeason(deck, seasonIndex, callback)
+    debugPrint("GameDeckPlacement", "placeCardsForSeason seasonIndex = ", seasonIndex)
+    -- How many to deal?
+    local cardsThisSeason = math.floor(numCardsInGameDeck / numSeasons)
+
+    if variableSeasonLength then
+        local playerCount = getSeatedPlayerCount()
+        if seasonIndex == 1 then
+            cardsThisSeason = cardsThisSeason - playerCount
+        elseif seasonIndex == numSeasons then
+            cardsThisSeason = cardsThisSeason + playerCount
+        end
+    end
+    debugPrint("GameDeckPlacement", "placeCardsForSeason cardsThisSeason = ", cardsThisSeason)
+
+    if not deck then
+        callback(deck)
+        return
+    end
+
+    local layoutDetails = {
+        numRows = numSeasons,
+        cardsThisRow = cardsThisSeason,
+    }
+    local cardPlacement = {
+        rowIndex = seasonIndex,
+        columnIndex = 1,
+    }
+    recursivePlaceNextCard(deck, layoutDetails, cardPlacement, callback)
+end
+
+local function recursivePlaceCardsForSeason(gameDeck, seasonIndex, onAllGameDeckCardsDealt)
+    -- Handle the end case: we are done.
+    if seasonIndex > numSeasons then
+        onAllGameDeckCardsDealt(gameDeck)
+        return
+    end
+
+    -- Deal the cards for this season.
+    placeCardsForSeason(gameDeck, seasonIndex, function(updatedDeck)
+        -- Wait a bit and repeat for the next season.
+        Wait.time(function()
+            -- That season is resolved: increment.
+            seasonIndex = seasonIndex + 1
+            recursivePlaceCardsForSeason(updatedDeck, seasonIndex, onAllGameDeckCardsDealt)
+        end, waitAfterDealtCardMoveSec)
+    end)
+end
+
+-- Called once all game deck cards are dealt: setup is now done.
+local function onAllGameDeckCardsDealt()
+    -- Game is now all set up, ready to play.
+    setPrivateState({appState = appStates.GameRunning})
+end
+
+local function dealAllSeasons(gameDeck)
+    recursivePlaceCardsForSeason(gameDeck, 1, onAllGameDeckCardsDealt)
+end
+
+--[[--------------------------
+
+Functions
+onLoad helpers.
+
+]] ---------------------------
 local function fillInCardDistributionByNumPlayers()
     for i = 1, maxPlayers do
         if not cardDistributionByNumPlayers[i] then
@@ -1664,6 +1756,119 @@ local function setMaxCardCount()
             end
         end
     end
+end
+
+local function configureBottomButtonLayout()
+    -- Set bottom button table attributes.
+    local rowWidth = maxBottomButtonsPerRow * bottomButtonWidth + (maxBottomButtonsPerRow - 1) * bottomButtonSpacing
+    local tableHeight = (bottomButtonHeight + bottomButtonSpacing) * 2
+    UI.setAttributes(bottomButtonPanelId, {
+        width = tostring(rowWidth),
+        height = tostring(tableHeight),
+    })
+
+    -- Set bottom button table layout attributes.
+    UI.setAttributes(bottomButtonTableLayoutId, {
+        width = tostring(rowWidth),
+        height = tostring(tableHeight),
+        cellSpacing = tostring(bottomButtonSpacing),
+    })
+
+    -- Set bottom button row attributes.
+    for _, rowId in pairs(bottomRowIds) do
+        UI.setAttributes(rowId, {
+            preferredHeight = tostring(bottomButtonHeight),
+            preferredWidth = tostring(rowWidth),
+        })
+    end
+
+    -- Set all the bottom button attributes.
+    for _, buttonId in pairs(bottomButtonIds) do
+        UI.setAttributes(buttonId, {
+            width = tostring(bottomButtonWidth),
+            height = tostring(bottomButtonHeight),
+        })
+    end
+end
+
+local function fillInCardTypeToSourceDeckGUID()
+    cardTypeToSourceDeckGUID = {}
+    local sourceDecks = getObjectsWithTag(sourceDeckTag)
+    if not sourceDecks then
+        debugPrint("SourceDeckCreation", "Doug: fillInCardTypeToSourceDeckGUID: sourceDecks is nil")
+        return
+    end
+    if #sourceDecks == 0 then
+        debugPrint("SourceDeckCreation", "Doug: fillInCardTypeToSourceDeckGUID: sourceDecks is empty")
+        return
+    end
+    for _, cardType in pairs(cardTypes) do
+        for _, sourceDeck in pairs(sourceDecks) do
+            if sourceDeck.getName() == cardType then
+                cardTypeToSourceDeckGUID[cardType] = sourceDeck.getGUID()
+            end
+        end
+    end
+end
+
+local function confirmCardNames()
+    for cardType, sourceDeckGUID in pairs(cardTypeToSourceDeckGUID) do
+        local sourceDeck = getObjectFromGUID(sourceDeckGUID)
+        local expectCardName = cardType
+        local objects = sourceDeck.getObjects()
+        for _, card in pairs(objects) do
+            assert(card.name == expectCardName,
+                "Doug: Error, card name mismatch: got " .. card.name .. " expected " .. expectCardName)
+        end
+    end
+end
+
+local function maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
+    debugPrint("SourceDeckCreation", "Doug: maybeMakeSourceDecksFromImportedDeck")
+    -- If source decks already exist, we are done.
+    local sourceDecks = getObjectsWithTag(sourceDeckTag)
+    if sourceDecks and #sourceDecks > 0 then
+        debugPrint("SourceDeckCreation", "Doug: maybeMakeSourceDecksFromImportedDeck: source decks already exist.")
+        onSourceDecksCreated()
+        return
+    end
+
+    local importedDeck = getImportedDeck()
+    if not importedDeck then
+        debugPrint("SourceDeckCreation", "Doug: maybeMakeSourceDecksFromImportedDeck: no imported deck.")
+        return
+    end
+    local importedCardCount = importedDeck.getQuantity()
+
+    local function onAllImportedDeckCardsPlaced(_)
+        debugPrint("SourceDeckCreation", "Doug: onAllImportedDeckCardsPlaced")
+        Wait.time(function()
+            -- All the cards are out.
+            -- Make decks out of them.
+            makeDecksFromImportedCards(onSourceDecksCreated)
+        end, 1)
+    end
+
+    local function cardTwiddleCallback(importedCard, index)
+        -- set tag on new card.
+        importedCard.addTag(importedCardTag)
+        importedCard.setName(orderedCardTypes[index])
+    end
+
+    -- place cards from imported deck.
+    local layoutDetails = {
+        numRows = 1,
+        cardsThisRow = importedCardCount,
+    }
+    local cardPlacement = {
+        rowIndex = 1,
+        columnIndex = 1,
+    }
+
+    debugPrint("SourceDeckCreation", "Doug: maybeMakeSourceDecksFromImportedDeck callling recursivePlaceNextCard")
+    recursivePlaceNextCard(importedDeck, layoutDetails, cardPlacement, onAllImportedDeckCardsPlaced, {
+        cardTwiddleCallback = cardTwiddleCallback,
+    })
 end
 
 --[[
@@ -1707,76 +1912,12 @@ local function makeDecksFromImportedCards(onSourceDecksCreated)
     onSourceDecksCreated()
 end
 
-local function maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
-    -- If source decks already exist, we are done.
-    local sourceDecks = getObjectsWithTag(sourceDeckTag)
-    if sourceDecks and #sourceDecks > 0 then
-        onSourceDecksCreated()
-        return
-    end
-
-    local importedDeck = getImportedDeck()
-    if not importedDeck then
-        return
-    end
-    local importedCardCount = importedDeck.getQuantity()
-
-    local function onAllCardsPlaced(_)
-        Wait.time(function()
-            -- All the cards are out.
-            -- Make decks out of them.
-            makeDecksFromImportedCards(onSourceDecksCreated)
-        end, 1)
-    end
-
-    local function cardTwiddleCallback(importedCard, index)
-        -- set tag on new card.
-        importedCard.addTag(importedCardTag)
-        importedCard.setName(orderedCardTypes[index])
-    end
-
-    -- place cards from imported deck.
-    local layoutDetails = {
-        numRows = 1,
-        cardsThisRow = importedCardCount,
-    }
-    local cardPlacement = {
-        rowIndex = 1,
-        columnIndex = 1,
-    }
-
-    recursivePlaceNextCard(importedDeck, layoutDetails, cardPlacement, onAllCardsPlaced, {
-        cardTwiddleCallback = cardTwiddleCallback,
-    })
-end
-
 --[[--------------------------
 
 Functions
 Top level for building and updating XML.
 
 ]] ---------------------------
- local function createScriptingBasedUI()
-     -- Set XML to pristine.
-    UI.setXmlTable(pristineXml)
-
-    local currentXML = UI.GetXmlTable()
-    local updatedXML
-    -- Build the XML for the final tally panel.
-    updatedXML = createFinalTallyPanel(currentXML)
-    -- Build the XML for the view-all-bids panel.
-    updatedXML = createBidViewPanel(updatedXML)
-
-    -- One bid input panel per player.
-    local seatedPlayerObjects = getSeatedPlayerObjects()
-    for _, seatedPlayerObject in pairs(seatedPlayerObjects) do
-        updatedXML = createBidInputPanel(updatedXML, seatedPlayerObject)
-    end
-
-    -- Set the XML.
-    UI.setXmlTable(updatedXML)
-end
-
 -- Toggle panel on/off.
 -- Return true iff panel is visible.
 local function togglePanelVisibility(panelId)
@@ -1795,7 +1936,8 @@ end
 -- Return true iff panel is visible.
 local function togglePanelVisibilityWithButtonNameUpdate(panelId, buttonId)
     local isVisible = togglePanelVisibility(panelId)
-    updateButtonText(buttonId, isVisible)
+    debugPrint("BidInputPanel", "Doug: togglePanelVisibilityWithButtonNameUpdate: panelId = ", panelId, " isVisible = ", isVisible)
+    updateButtonText(buttonId)
     return isVisible
 end
 
@@ -1805,87 +1947,156 @@ Functions
 Called by state machine when state changes.
 
 ]] ---------------------------
+-- Look at rodux state.
+-- From that determine whether thsis button should be enabled or not.
+-- Set the button enabled state.
+-- Update the text accordingly.
 local function updateBottomButtonBasedOnState(buttonId)
+    debugPrint("ButtonConfiguration", "Doug: updateBottomButtonBasedOnState: buttonId = ", buttonId)
+
     -- Enable or disable the button.
     local buttonEnabled = isBottomButtonEnabled(buttonId)
+    debugPrint("ButtonConfiguration", "Doug: updateBottomButtonBasedOnState: buttonEnabled = ", buttonEnabled)
     setBottomButtonEnabled(buttonId, buttonEnabled)
 
     -- Make sure text is up to date too.
-    updateButtonText(buttonId, buttonEnabled)
+    updateButtonText(buttonId)
 end
 
-local function maybeHidePanel(panelId)
-    -- If we are not running, all panels are hidden.
-    local gir = getPrivateState("gameIsRunning")
-    if not gir then
+-- We have some panel.
+-- Check rodux state to see if it should be forced to invisible.
+-- If should be invisible, make it so.
+local function updatePanelVisibility(panelId)
+    debugPrint("PanelVisibility", "Doug: updatePanelVisibility: panelId = ", panelId)
+    local currentXML = UI.GetXmlTable()
+
+    debugPrint("PanelVisibility", "Doug: currentXML = ")
+
+    local panel = findXmlNodeWithID(currentXML, panelId)
+    -- This should exist.
+    assert(panel ~= nil, "Panel missing: panelId = " .. panelId)
+
+    -- If we are not running, any panel should be hidden.
+    local appState = getPrivateState("appState")
+    if not appState ~= appStates.GameRunning then
+        debugPrint("PanelVisibility", "Doug: not running: panel is invisible")
         UI.hide(panelId)
+        return
     end
 
     -- If bidding open, you can't see bid view panel.
+    -- Also, all bid input panels are visible.
     local bio = getPrivateState("biddingIsOpen")
-    if bio and panelId == bidViewPanelId then
-        UI.hide(panelId)
+    if bio then
+        if panelId == bidViewPanelId then
+            debugPrint("PanelVisibility", "Doug: bidding open: bidViewPanelId invisible")
+            UI.hide(panelId)
+        elseif string.find(panelId, bidInputPanelIdPrefix) then
+            debugPrint("PanelVisibility", "Doug: bidding open: bidInputPanel visible: " .. panelId)
+            UI.show(panelId)
+        end
+    else
+        -- If bidding is not open you can't see bid input panels.
+        if string.find(panelId, bidInputPanelIdPrefix) then
+            debugPrint("PanelVisibility", "Doug: bidding closed: bidInputPanel invisible: " .. panelId)
+            UI.hide(panelId)
+        end
     end
+end
 
-    -- If bidding is not open you can't see bid input panels.
-    if not bio and string.find(panelId, bidInputPanelIdPrefix) then
-        UI.hide(panelId)
+-- State has changed.
+-- If any derived state should change as a result, get that and send it back.
+local function updateDerivedState(state)
+    -- Handle any cases of "if state X changes then state Y must also change".
+    -- If game is not running...
+    if state["gameIsRunning"] == false then
+        -- ...then bidding is not open.
+        state["biddingIsOpen"] = false
     end
+    return state
 end
 
 -- State has changed.
 -- We may want to update the UI accordingly.
 local function updateUIBasedOnCurrentState()
-    -- For each bottom button:
-    -- update enabled.
-    -- update text strings.
-    for _, buttonId in pairs(bottomButtonIds) do
-        updateBottomButtonBasedOnState(buttonId)
+    debugPrint("ButtonConfiguration", "Doug: updateUIBasedOnCurrentState")
+    -- State changes may force panels to show or hide.
+    for panelId, _ in pairs(allPanelIdsSet) do
+        updatePanelVisibility(panelId)
     end
 
-    -- State changes may force panels to hide.
-    for panelId, _ in pairs(allPanelIdsSet) do
-        maybeHidePanel(panelId)
-    end
+    -- For each bottom button, we might need to change enabled state
+    -- and/or text.
+    -- We do this after a wait so that the panels open/closed can settle, since
+    -- that may affect button text.
+    Wait.time(function()
+        for _, buttonId in pairs(bottomButtonIds) do
+            updateBottomButtonBasedOnState(buttonId)
+        end
+    end, standardWaitSec)
 end
 
 --[[--------------------------
 
 Functions
-Called by system events.
+Helpers for setup and cleanup.
 
 ]] ---------------------------
-local function configureBottomButtonLayout()
-    -- Set bottom button table attributes.
-    local rowWidth = maxBottomButtonsPerRow * bottomButtonWidth + (maxBottomButtonsPerRow - 1) * bottomButtonSpacing
-    local tableHeight = (bottomButtonHeight + bottomButtonSpacing) * 2
-    UI.setAttributes(bottomButtonPanelId, {
-        width = tostring(rowWidth),
-        height = tostring(tableHeight),
-    })
+-- Move the source card decks offscreen
+local function hideSourceDecks()
+    for _, deckGUID in pairs(cardTypeToSourceDeckGUID) do
+        local sourceDeck = getObjectFromGUID(deckGUID)
+        local position = sourceDeck.getPosition()
+        position.y = hiddenDeckYPos
+        sourceDeck.setPosition(position)
+        sourceDeck.setLock(true)
+    end
+end
 
-    -- Set bottom button table layout attributes.
-    UI.setAttributes(bottomButtonTableLayoutId, {
-        width = tostring(rowWidth),
-        height = tostring(tableHeight),
-        cellSpacing = tostring(bottomButtonSpacing),
-    })
+local function cleanupOldGame()
+    -- Reset XML to pristine.
+    debugPrint("XMLTableBuilding", "Doug: cleanupOldGame: resetting XML")
+    UI.setXmlTable(pristineXml)
 
-    -- Set bottom button row attributes.
-    for _, rowId in pairs(bottomRowIds) do
-        UI.setAttributes(rowId, {
-            preferredHeight = tostring(bottomButtonHeight),
-            preferredWidth = tostring(rowWidth),
-        })
+    -- Kill the game deck.  Kill any card that was dealt.
+    if gameDeckGUID then
+        local gameDeck = getObjectFromGUID(gameDeckGUID)
+        gameDeck.destruct()
+        gameDeckGUID = nil
+
+        local dealtCards = getObjectsWithTag("dealtCard")
+        for _, dealtCard in pairs(dealtCards) do
+            dealtCard.destruct()
+        end
     end
 
-    -- Set all the bottom button attributes.
-    for _, buttonId in pairs(bottomButtonIds) do
-        UI.setAttributes(buttonId, {
-            width = tostring(bottomButtonWidth),
-            height = tostring(bottomButtonHeight),
-        })
+    -- Reset storage.
+    local seatedPlayerObjects = getSeatedPlayerObjects()
+    for _, seatedPlayerObject in pairs(seatedPlayerObjects) do
+        cleanupTypedScoresForPlayer(seatedPlayerObject.color)
+        cleanupBidDetailsForPlayer(seatedPlayerObject.color)
     end
+end
+
+local function createScriptingBasedUI()
+   local currentXML = UI.GetXmlTable()
+   local updatedXML
+
+   -- Build the XML for the final tally panel.
+   updatedXML = fillInFinalTallyPanel(currentXML)
+
+   -- Build the XML for the view-all-bids panel.
+   updatedXML = fillInBidViewPanel(updatedXML)
+
+   -- One bid input panel per player.
+   local seatedPlayerObjects = getSeatedPlayerObjects()
+   for _, seatedPlayerObject in pairs(seatedPlayerObjects) do
+       updatedXML = fillInBidInputPanelForPlayer(updatedXML, seatedPlayerObject)
+   end
+
+   -- Set the XML.
+   debugPrint("XMLTableBuilding", "Doug: createScriptingBasedUI: setting XML")
+   UI.setXmlTable(updatedXML)
 end
 
 --[[--------------------------
@@ -1895,50 +2106,79 @@ Called by system events.
 
 ]] ---------------------------
  -- The onLoad event is called after the game save finishes loading.
-function onLoad()
+local function debugPrintTime(message)
+    local time = os.date("%H:%M:%S")
+    debugPrint("Timing", "Doug: " .. time .. ": " .. message)
+end
+
+ function onLoad()
+    debugPrintTime("declaringValidStates")
     -- Init state.
     declareValidState("typedScoresByPlayerColor", {})
     declareValidState("bidDetailsByPlayerColor", {})
     declareValidState("creatingGameDeck", false)
     declareValidState("gameIsRunning", false)
-    declareValidState("loadingAllDone", false)
+    declareValidState("appState", appStates.Null)
+    declareValidState("setupIsRunning", false)
     declareValidState("biddingIsOpen", false)
 
-    -- Listen for changes to private state.
-    addStateChangedCallbackAndReturnCallbackId(updateUIBasedOnCurrentState)
+    debugPrintTime("adding state callbacks")
+    -- Listen for changes to private state: call this to change dependent state.
+    addStateChangedStateModCallback(updateDerivedState)
 
+    -- Listen for changes to private state: call this for UI fallout.
+    addStateChangedUIModCallback(updateUIBasedOnCurrentState)
+
+    debugPrintTime("count stuff")
     -- Fill in some derived global tables/variables.
     fillInCardDistributionByNumPlayers()
     setMaxCardCount()
 
-    -- Do UI Setup
-    configureBottomButtonLayout()
-    updateUIBasedOnCurrentState()
-
-    -- Do I have too wait a second here fo rthings to apply?
+    -- Do I have too wait a second here for things to apply?
     Wait.time(function()
-        -- Waited to get pristine XML...
-        -- Keep a clean copy around for when we reset.
+        debugPrintTime("getting XML")
+
+        -- XML in file is pretty basic/useless.
+        -- We have to fill in a lot of details:
+        -- 1. Configure the bottom buttons.
+        -- 2. Fill in the "I'm submitting my bid" panels.
+        -- 3. Fill in the final tally panel.
+        -- 4. Fill in the "here's the bids" panel.
+        -- Item 1 can be done right away: buttons are always the same.
+        -- The others all change based on number/color/name of players: we have
+        -- to create those on startup.
+
+        -- So:
+        -- First we are going to make the buttons.
+        configureBottomButtonLayout()
+
+        -- Then we are going to cache a notion of "pristine" XML: at game end
+        -- we reset to this.
         pristineXml = UI.GetXmlTable();
 
+        -- Now we can update the UI based on current state.
+        updateUIBasedOnCurrentState()
+
+        debugPrintTime("making source decks")
         local function onSourceDecksCreated()
+            debugPrintTime("source decks created.")
             Wait.time(function()
+                debugPrintTime("source decks created: waited.")
                 fillInCardTypeToSourceDeckGUID()
                 confirmCardNames()
-                setPrivateState("loadingAllDone", true)
-            end, standardWaitSec * 2)
+                debugPrint("StateMachine", "Doug: setting appState to CreatedSourceDecks")
+                setPrivateState({appState = appStates.CreatedSourceDecks})
+            end, standardWaitSec)
         end
 
-        maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
-    end, 2)
-end
-
--- The onUpdate event is called once per frame.
-function onUpdate()
-    --[[ print('onUpdate loop!') --]]
-end
-
-function onPlayerChangeColor(color)
+        -- FIXME(dbanks)
+        -- Remove the if.
+        if true then
+            maybeMakeSourceDecksFromImportedDeck(onSourceDecksCreated)
+        else
+            onSourceDecksCreated()
+        end
+    end, standardWaitSec)
 end
 
 function onPlayerDisconnect(player)
@@ -1960,13 +2200,6 @@ end
 --[[--------------------------
 
 Functions
-Helpers for updating buttons enabled, button text, panel visibility.
-
-]] ---------------------------
-
---[[--------------------------
-
-Functions
 Called from global.xml
 
 ]] ---------------------------
@@ -1979,27 +2212,27 @@ function setup(clickedPlayer)
         return
     end
 
-    local gir = getPrivateState("gameIsRunning")
-    -- If already running, no-op.
-    if gir then
+    local appState = getPrivateState("appState")
+    if appState ~= appStates.CreatedSourceDecks then
         return
     end
 
-    setPrivateState("gameIsRunning", true, function()
-        hideSourceDecks()
+    setPrivateState(
+        {
+            appState = appStates.SetupRunning,
+        }, function()
+            hideSourceDecks()
 
-        -- Cleanup old spawns.
-        cleanupOldGame()
+            -- Cleanup old spawns.
+            cleanupOldGame()
 
-        -- build all the code-driven XML.
-        createScriptingBasedUI()
+            -- build all the code-driven XML.
+            createScriptingBasedUI()
 
-        --[[
-        Wait.time(function()
-            startLuaCoroutine(Global, "createGameDeckAndDealSeasons")
-        end, standardWaitSec * 2)
-    ]]
-    end)
+            Wait.time(function()
+                createFlipAndShuffleGameDeck(dealAllSeasons)
+            end, standardWaitSec * 2)
+        end)
 end
 
 function cleanup()
@@ -2008,13 +2241,18 @@ function cleanup()
     end
 
     -- If not already running, no-op.
-    local gir = getPrivateState("gameIsRunning")
-    if not gir then
+    local appState = getPrivateState("appState")
+    if not appState == appStates.GameRunning then
         return
     end
 
-    setPrivateState("gameIsRunning", false, function()
+    setPrivateState(
+        {
+            appState = appStates.CleanupRunning,
+        }, function()
         cleanupOldGame()
+        -- We are now back to the state where source decks are ready, game deck gone, etc.
+        setPrivateState({appState = appStates.CreatedSourceDecks})
     end)
 end
 
@@ -2024,7 +2262,8 @@ function toggleBiddingOpen()
     end
 
     local bio = getPrivateState("biddingIsOpen")
-    setPrivateState("biddingIsOpen", not bio)
+    print("Doug: toggleBiddingIsOpen: bio = ", bio)
+    setPrivateState({biddingIsOpen = not bio})
 end
 
 function toggleBidViewPanel()
@@ -2041,17 +2280,6 @@ function toggleFinalTallyPanel()
     end
 
     togglePanelVisibilityWithButtonNameUpdate(finalTallyPanelId, toggleFinalTallyPanelButtonId)
-end
-
-function toggleBidInputPanel(clickedPlayer)
-    if not isBottomButtonEnabled(setAndSubmitBidButtonId) then
-        return
-    end
-
-    -- We have a bid panel for each player: we are showing just the one belonging to this fellow.
-    local color = clickedPlayer.color
-    local bidInputPanelId = makeBidInputPanelIdForPlayer(color)
-    togglePanelVisibilityWithButtonNameUpdate(bidInputPanelId, setAndSubmitBidButtonId)
 end
 
 --[[
@@ -2102,27 +2330,4 @@ function onScoreInputCellUpdated(_, textValue, cellInputElementId)
         local sumId = makeCellElementId(textIdPrefix, finalTallySumRowIndex, columnIndex)
         UI.setAttribute(sumId, "text", tostring(totalScoreForPlayer))
     end, handleInputWaitSec)
-end
-
---[[--------------------------
-
-Functions
-Called by coroutines. These cannot be local functions.
-Note any called-by-coroutine needs to return 0 or 1 to talk about success.
-
-]] ---------------------------
-function createGameDeckAndDealSeasons()
-    -- Non-reentrant.
-    local cgd = getPrivateState("creatingGameDeck")
-    if cgd then
-        return 1
-    end
-
-    setPrivateState("creatingGameDeck", true, function()
-        local sourceDecksWithNumCards = getSourceDecksWithNumCards()
-        gameDeckGUID = nil
-        recursiveGetCardsFromNextSourceDeck(sourceDecksWithNumCards, 1, onGameDeckCreated)
-    end)
-
-    return 1
 end

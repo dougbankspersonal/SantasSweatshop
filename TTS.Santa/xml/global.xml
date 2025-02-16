@@ -1,44 +1,52 @@
-    <Defaults>
-        <Panel class="PanelClass" height ="10" width = "10" returnToOriginalPositionWhenReleased="false" allowDragging="true" showAnimation="FadeIn" hideAnimation="FadeOut" rectAlignment="MiddleRight" outline="#635351" outlineSize="2 -2" />
-        /* button */
-        <Button class="HostButton" visibility="Host"  ignoreLayout="true"  color="rgb(0.3, 0.3, 0.3)"/>
-        <Button class="PlayerButton" ignoreLayout="true" color="rgb(0.5, 0.5, 0.5)"/>
-        /* cells */
-        <TableLayout class="TableLayoutClass" autoCalculateHeight="true" rectAlignment="LowerCenter" rowBackgroundColor="#00ff00"/>
-        /* rows */
-        <Row class="TextRowClass" dontUseTableRowBackground="true" />
-        <Row class="InputRowClass" dontUseTableRowBackground="true" />
-        <Row class="ButtonTableRowClass" dontUseTableRowBackground="true" />
+<Defaults>
+    <Panel class="PanelClass" height ="10" width = "10" returnToOriginalPositionWhenReleased="false" allowDragging="true" showAnimation="FadeIn" hideAnimation="FadeOut" rectAlignment="MiddleRight" outline="#635351" outlineSize="2 -2" />
+    /* button */
+    <Button class="HostButton" visibility="Host"  ignoreLayout="true"  color="rgb(0.3, 0.3, 0.3)"/>
+    <Button class="PlayerButton" ignoreLayout="true" color="rgb(0.5, 0.5, 0.5)"/>
+    /* cells */
+    <TableLayout class="TableLayoutClass" autoCalculateHeight="true" rectAlignment="LowerCenter" rowBackgroundColor="#00ff00"/>
+    /* rows */
+    <Row class="TextRowClass" dontUseTableRowBackground="true" />
+    <Row class="InputRowClass" dontUseTableRowBackground="true" />
+    <Row class="ButtonTableRowClass" dontUseTableRowBackground="true" />
 
-        /* cells */
-        <Cell class ="InputCellClass" overrideGlobalCellPadding="true" padding="20 20 10 10" />
-        <Cell class ="LabelCellClass" />
-        <Cell class ="PlayerNameCellClass" />
-        <Cell class ="SumCellClass" />
+    /* cells */
+    <Cell class ="InputCellClass" overrideGlobalCellPadding="true" padding="20 20 10 10" />
+    <Cell class ="LabelCellClass" />
+    <Cell class ="PlayerNameCellClass" />
+    <Cell class ="SumCellClass" />
 
-        /* input fields */
-        <InputField class="InputClass" characterValidation="Integer" rectAlignment="UpperCenter" textAlignment = "MiddleCenter" fontSize="14" fontStyle="Bold" colors="#FFFFFF|#dddddd|#FFFFFF|rgba(0.78,0.78,0.78,0.5)" />
+    /* input fields */
+    <InputField class="InputClass" characterValidation="Integer" rectAlignment="UpperCenter" textAlignment = "MiddleCenter" fontSize="14" fontStyle="Bold" colors="#FFFFFF|#dddddd|#FFFFFF|rgba(0.78,0.78,0.78,0.5)" />
 
-        /* text */
-        <Text class="LabelTextClass" fontSize="18" fontStyle="Bold" color="#000000" />
-        <Text class="PlayerNameTextClass" fontSize="18" fontStyle="Bold" color="#000000" />
-        <Text class="SumTextClass"  fontSize="18" fontStyle="Bold" color="#000000" />
-        <Text class="TitleTextClass" fontSize="24" fontStyle="Bold" color="#000000" rectAlignment="UpperCenter" textAlignment="UpperCenter" />
-    </Defaults>
-    /* Panels */
-    <Panel id="BottomButtonPanel" alignment="LowerCenter" rectAlignment="LowerCenter" height="300" width="2000">
-        <TableLayout id="BottomButtonTableLayout" width="90" height="90" cellSpacing="20"  rectAlignment="LowerCenter" cellBackgroundColor="rgba(0, 0, 0, 0)">
-            <Row id="BottomButtonRow1" class="ButtonTableRowClass">
-                <Cell><Button id="SetupButtonId" class="HostButton" onClick="setup">Setup Game</Button></Cell>
-                <Cell><Button id="CleanupButtonId" visibility="Host" class="HostButton" onClick="cleanup" text="Cleanup Game"/></Cell>
-                <Cell><Button id="ToggleBiddingOpenButtonId" visibility="Host" class="HostButton" onClick="toggleBiddingOpen" text="Open Bidding"/></Cell>
-                <Cell><Button id="ToggleBidsViewPanelButtonId" visibility="Host" class="HostButton" onClick="toggleBidViewPanel" text="Toggle Bids"/></Cell>
-                <Cell><Button id="ToggleFinalTallyPanelButtonId" visibility="Host" class="HostButton" onClick="toggleFinalTallyPanel" text="Toggle Scores"/></Cell>
-            </Row>
-            <Row id="BottomButtonRow2" class="ButtonTableRowClass">
-                <Cell columnSpan="5"><Button id="SetAndSubmitBidButton" class="PlayerButton" onClick="toggleBidInputPanel" text="Update Bid"/></Cell>
-            </Row>
-        </TableLayout>
-    </Panel>
-    <Panel id="FinalTallyPanel" class="PanelClass" active="false"/>
-    <Panel id="BidViewPanel" class="PanelClass" active="false"/>
+    /* text */
+    <Text class="LabelTextClass" fontSize="18" fontStyle="Bold" color="#000000" />
+    <Text class="PlayerNameTextClass" fontSize="18" fontStyle="Bold" color="#000000" />
+    <Text class="SumTextClass"  fontSize="18" fontStyle="Bold" color="#000000" />
+    <Text class="TitleTextClass" fontSize="24" fontStyle="Bold" color="#000000" rectAlignment="UpperCenter" textAlignment="UpperCenter" />
+</Defaults>
+/* Panels */
+<Panel id="BottomButtonPanel" alignment="LowerCenter" rectAlignment="LowerCenter" height="300" width="2000">
+    <TableLayout id="BottomButtonTableLayout" width="90" height="90" cellSpacing="20"  rectAlignment="LowerCenter" cellBackgroundColor="rgba(0, 0, 0, 0)">
+        <Row id="BottomButtonRow1" class="ButtonTableRowClass">
+            <Cell><Button id="SetupButtonId" class="HostButton" onClick="setup">Setup Game</Button></Cell>
+            <Cell><Button id="CleanupButtonId" visibility="Host" class="HostButton" onClick="cleanup" text="Cleanup Game"/></Cell>
+            <Cell><Button id="ToggleBiddingOpenButtonId" visibility="Host" class="HostButton" onClick="toggleBiddingOpen" text="Open Bidding"/></Cell>
+            <Cell><Button id="ToggleBidsViewPanelButtonId" visibility="Host" class="HostButton" onClick="toggleBidViewPanel" text="Toggle Bids"/></Cell>
+            <Cell><Button id="ToggleFinalTallyPanelButtonId" visibility="Host" class="HostButton" onClick="toggleFinalTallyPanel" text="Toggle Scores"/></Cell>
+        </Row>
+    </TableLayout>
+</Panel>
+<Panel id="FinalTallyPanel" class="PanelClass" active="false"/>
+<Panel id="BidViewPanel" class="PanelClass" active="false"/>
+/* One input panel for each player.  Wish I did not have to hard code this but here we are. */
+<Panel id="BidInputPanel_White" visibility="White" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Brown" visibility="Brown" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Red" visibility="Red" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Orange" visibility="Orange" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Yellow" visibility="Yellow" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Green" visibility="Green" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Teal" visibility="Teal" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Blue" visibility="Blue" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Purple" visibility="Purple" class="PanelClass" active="false"/>
+<Panel id="BidInputPanel_Pink" visibility="Pink" class="PanelClass" active="false"/>
