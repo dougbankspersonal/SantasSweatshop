@@ -1,10 +1,11 @@
 define([
 	'dojo/string',
     'dojo/dom',
-	'javascript/gameUtils',
 	'dojo/dom-style',
+	'javascript/gameUtils',
+	'javascript/debugLog',
 	'dojo/domReady!'
-], function(string, dom, gameUtils, domStyle){
+], function(string, dom, domStyle, gameUtils, debugLog){
 
 	var adjustedPageWidth = gameUtils.printedPagePortraitWidth - 2 * gameUtils.pageWidthPadding
 	var adjustedPageHeight = gameUtils.printedPagePortraitHeight - 2 * gameUtils.pageHeightPadding
@@ -14,13 +15,15 @@ define([
 	var bigCardFitHorizontally = Math.floor(adjustedPageWidth / gameUtils.bigCardWidth)
 	var bigCardFitVertically = Math.floor(adjustedPageHeight / gameUtils.bigCardHeight)
 
-	var cardsPerPage = cardFitHorizontally * cardFitVertically
+	var defaultCardsPerPage = cardFitHorizontally * cardFitVertically
 	var bigCardsPerPage = bigCardFitHorizontally * bigCardFitVertically
-
 	var ttsCardsPerPage = 70
 
-	function setCardSize(node, configs) {
+	function setCardSize(node) {
+		var configs = gameUtils.getConfigs()
+		debugLog.debugLog("Cards", "Doug: setCardSize: configs = " + JSON.stringify(configs))
 		if (configs.bigCards) {
+			debugLog.debugLog("Cards", "Doug: using bigCardWidth = " + String(gameUtils.bigCardWidth))
 			domStyle.set(node, {
 				"width": `${gameUtils.bigCardWidth}px`,
 				"height": `${gameUtils.bigCardHeight}px`,
@@ -28,6 +31,7 @@ define([
 		}
 		else
 		{
+			debugLog.debugLog("Cards", "Doug: using width = " + String(gameUtils.width))
 			domStyle.set(node, {
 				"width": `${gameUtils.cardWidth}px`,
 				"height": `${gameUtils.cardHeight}px`,
@@ -35,11 +39,10 @@ define([
 		}
 	}
 
-	function addCardBack(parent, title, color, opt_configs) {
-		var configs = opt_configs ? opt_configs : {}
+	function addCardBack(parent, title, color) {
 		var node = gameUtils.addCard(parent, ["back"], "back")
 
-		setCardSize(node, configs)
+		setCardSize(node)
 
 		var innerNode = gameUtils.addDiv(node, ["inset"], "inset")
 		var otherColor = gameUtils.blendHexColors(color, "#ffffff")
@@ -65,22 +68,6 @@ define([
 		return node
 	}
 
-	function addNutDesc(parent, nutType) {
-		console.log("Doug: nutType = ", nutType)
-		var wrapper = gameUtils.addDiv(parent, ["wrapper"], "wrapper")
-		var nutPropsTopNode = gameUtils.addDiv(wrapper, ["nutProps"], "nutProps")
-
-		var nutType
-		if (nutType == -1) {
-			nutType = "Wild"
-		}
-
-		var prop = gameUtils.addDiv(nutPropsTopNode, ["nutProp", "nutType"], "nutType")
-		console.log("Doug: 001 nutType = ", nutType)
-		gameUtils.addImage(prop, ["nutType", nutType], "nutType")
-		return wrapper
-	}
-
 	function addCards(title, color, numCards, contentCallback, opt_configs) {
 		var bodyNode = dom.byId("body");
 		var configs = opt_configs ? opt_configs : {}
@@ -89,13 +76,11 @@ define([
 		var pageOfFronts
 		var pageOfBacks
 
-		var timeForNewPageDivisor
-		if (configs.ttsCards) {
-			timeForNewPageDivisor = ttsCardsPerPage
-		} else if (configs.bigCards) {
-			timeForNewPageDivisor = bigCardsPerPage
+		var cardsPerPage
+		if (configs.cardsPerPage) {
+			cardsPerPage = configs.cardsPerPage
 		} else {
-			timeForNewPageDivisor = cardsPerPage
+			cardsPerPage = defaultCardsPerPage
 		}
 
 		var addBackFunction
@@ -106,11 +91,11 @@ define([
 			addBackFunction = addCardBack
 		}
 
-		var shouldAddBacks = !configs.ttsCards && !configs.noBacks
+		var shouldAddBacks = !configs.skipBacks
 
 		if (configs.separateBacks) {
 			for (let i = 0; i < numCards; i++) {
-				var timeForNewPage = i % timeForNewPageDivisor
+				var timeForNewPage = i % cardsPerPage
 				if (timeForNewPage == 0) {
 					pageOfFronts = gameUtils.addPageOfItems(bodyNode)
 				}
@@ -120,18 +105,18 @@ define([
 			if (shouldAddBacks)
 			{
 				for (let i = 0; i < numCards; i++) {
-					var timeForNewPage = i % timeForNewPageDivisor
+					var timeForNewPage = i % cardsPerPage
 					if (timeForNewPage == 0) {
 						pageOfBacks = gameUtils.addPageOfItems(bodyNode, ["back"])
 					}
-					addBackFunction(pageOfBacks, title, color, configs)
+					addBackFunction(pageOfBacks, title, color)
 				}
 			}
 		}
 		else
 		{
 			for (let i = 0; i < numCards; i++) {
-				var timeForNewPage = i % timeForNewPageDivisor
+				var timeForNewPage = i % cardsPerPage
 				if (timeForNewPage == 0) {
 					pageOfFronts = gameUtils.addPageOfItems(bodyNode)
 					if (shouldAddBacks) {
@@ -141,32 +126,57 @@ define([
 				contentCallback(pageOfFronts, i)
 				if (shouldAddBacks)
 				{
-					addBackFunction(pageOfBacks, title, color, configs)
+					addBackFunction(pageOfBacks, title, color)
 				}
 			}
 		}
 	}
 
+	function getInstanceCountFromConfig(cardConfigs, index)
+	{
+		var configs = gameUtils.getConfigs()
+		if (configs.singleCardInstance) {
+			// TTS is dumb, needs at least 12 cards.
+			if (cardConfigs.length < 12 && index == 0) {
+				return 12 - (cardConfigs.length -1)
+			} else {
+				return 1
+			}
+		} else {
+			return cardConfigs[index].count
+		}
+	}
+
+	function getNumCardsFromConfigs(cardConfigs)
+    {
+        var numCards = 0
+        for (var i = 0; i < cardConfigs.length; i++) {
+            numCards = numCards + cardConfigs[i].instanceCount
+        }
+        return numCards
+    }
+
+	function getCardConfigFromIndex(configs, index) {
+		for (var i = 0; i < configs.length; i++) {
+			console.assert(configs[i].instanceCount > 0)
+			if (index < configs[i].instanceCount) {
+				return configs[i]
+			}
+			index -= configs[i].instanceCount
+		}
+		return null
+	}
+
     // This returned object becomes the defined value of this module
     return {
-		getCardDescAtIndex: function(index, descs)
-		{
-			var count = 0
-			for (key in descs) {
-				var cardDesc = descs[key]
-				var contribution = cardDesc.number ? cardDesc.number : 1
-				count = count + contribution
-				if (index < count) {
-					return cardDesc
-				}
-			}
-			return null
-		},
-
 		addCardFront: addCardFront,
-
 		addCards: addCards,
-
 		setCardSize: setCardSize,
+		getNumCardsFromConfigs: getNumCardsFromConfigs,
+		getCardConfigFromIndex: getCardConfigFromIndex,
+		getInstanceCountFromConfig: getInstanceCountFromConfig,
+
+		bigCardsPerPage: bigCardsPerPage,
+		ttsCardsPerPage: ttsCardsPerPage,
     }
 });

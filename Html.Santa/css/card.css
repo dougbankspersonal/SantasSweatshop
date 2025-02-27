@@ -120,11 +120,11 @@
 	align-items: center;
 }
 
-.card.back .inset .title {
+.card.back .inset .cardBackTitle {
 	transform-origin: center;
-	transform: rotate(-45deg);
 	font-family: 'Courier';
 	text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+	margin-top: -20px;
 }
 
 .card.ghost {

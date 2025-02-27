@@ -1,16 +1,17 @@
 /* Deprecated */
 
 define([
-	'dojo/string',
-	'javascript/gameUtils',
 	'javascript/cards',
+	'javascript/debugLog',
+	'javascript/gameInfo',
+	'javascript/gameUtils',
+	'dojo/string',
 	'dojo/dom-style',
 	'dojo/domReady!',
-], function(string, gameUtils, cards, domStyle) {
+], function(cards, debugLog, gameInfo, gameUtils, string, domStyle) {
 
     var minicardWidth = 30
     var minicardHeight = minicardWidth * 1.4
-    var minicardMargin = minicardWidth/2
 
     function makeMinicard(parent) {
         var minicard = gameUtils.addDiv(parent, ["minicard"], "minicard")
@@ -21,30 +22,30 @@ define([
         return minicard
     }
 
-    function addToyComponentDesc(parent, config) {
+    function addToyComponentDesc(parent, toyComponentCardConfig) {
         var wrapper = gameUtils.addDiv(parent, ["wrapper"], "wrapper")
-        if (config.title) {
+        if (toyComponentCardConfig.title) {
             var imageNode = gameUtils.addDiv(wrapper, ["title"], "title")
-            imageNode.innerHTML = config.title
+            imageNode.innerHTML = toyComponentCardConfig.title
         }
-        if (config.class) {
+        if (toyComponentCardConfig.class) {
             for (var i = 0; i < 4; i++) {
                 var indexClass = "index" + i
-                var imageNode = gameUtils.addImage(parent, ["toyComponentImage", config.class, indexClass], "toyComponentImage")
+                var imageNode = gameUtils.addImage(parent, ["toyComponentImage", toyComponentCardConfig.class, indexClass], "toyComponentImage")
 
-                if (config.image) {
+                if (toyComponentCardConfig.image) {
                     domStyle.set(imageNode, {
-                        backgroundImage: `url(${config.image})`,
+                        backgroundImage: `url(${toyComponentCardConfig.image})`,
                     })
                 }
             }
         }
 
-        if (config.craft) {
-            var number = config.craft.number
-            var points = config.craft.points
-            var pointsPerCard = config.craft.pointsPerCard
-            var plus = config.craft.plus
+        if (toyComponentCardConfig.craft) {
+            var number = toyComponentCardConfig.craft.number
+            var points = toyComponentCardConfig.craft.points
+            var pointsPerCard = toyComponentCardConfig.craft.pointsPerCard
+            var plus = toyComponentCardConfig.craft.plus
 
             var leftSide
             var rightSide
@@ -63,19 +64,18 @@ define([
             }
 
             var text = `${leftSide} = ${rightSide}`
-
-            var craftWrapper = gameUtils.addDiv(wrapper, ["craftWrapper"], "craftWrapper", text)
+            gameUtils.addDiv(wrapper, ["craftWrapper"], "craftWrapper", text)
         }
 
-        if (config.special) {
-            special = gameUtils.addDiv(wrapper, ["special"], "special", config.special)
+        if (toyComponentCardConfig.special) {
+            special = gameUtils.addDiv(wrapper, ["special"], "special", toyComponentCardConfig.special)
         }
 
-        if (config.specialImages) {
+        if (toyComponentCardConfig.specialImages) {
             var imagesWrapper = gameUtils.addDiv(wrapper, ["imagesWrapper"], "imagesWrapper")
-            var separator = config.specialImagesSeparator ? config.specialImagesSeparator : "&nbsp;"
-            for (var i = 0; i < config.specialImages.length; i++) {
-                var specialImage = config.specialImages[i]
+            var separator = toyComponentCardConfig.specialImagesSeparator ? toyComponentCardConfig.specialImagesSeparator : "&nbsp;"
+            for (var i = 0; i < toyComponentCardConfig.specialImages.length; i++) {
+                var specialImage = toyComponentCardConfig.specialImages[i]
 
                 if (separator && i > 0) {
                     gameUtils.addDiv(imagesWrapper, ["specialImageSpacer"], "specialImageSpacer", separator)
@@ -92,49 +92,36 @@ define([
             }
         }
 
-        if (config.floor) {
+        if (toyComponentCardConfig.floor) {
             var floorWrapper = gameUtils.addDiv(wrapper, ["floorWrapper"], "floorWrapper")
             gameUtils.addImage(floorWrapper, ["floor"], "floor")
-            gameUtils.addDiv(floorWrapper, ["penalty"], "penalty", ` = ${config.floor}`)
+            gameUtils.addDiv(floorWrapper, ["penalty"], "penalty", ` = ${toyComponentCardConfig.floor}`)
         }
     }
 
-    function addToyComponentCard(parent, index, ttsCards, configs) {
-        var config
-        var originalIndex = index
-        for (var i = 0; i < configs.length; i++) {
-            var numberPerPlayer = getCountOfCard(ttsCards, configs[i])
-            if (numberPerPlayer > index) {
-                config = configs[i]
-                break
-            }
-            else
-            {
-                index -= numberPerPlayer
-            }
-        }
-
+    function addToyComponentCard(parent, toyComponentCardConfig, idHelper) {
+        debugLog.debugLog("Cards", "Doug addToyComponentCard toyComponentCardConfig = " + JSON.stringify(toyComponentCardConfig))
         var idElements = [
             "toyComponent",
-            originalIndex.toString(),
+            idHelper.toString(),
         ]
         var id = idElements.join(".")
         var classArray = []
         classArray.push("toyComponent")
-        classArray.push(config.class)
+        classArray.push(toyComponentCardConfig.class)
         var node = cards.addCardFront(parent, classArray, id)
 
-        var gradient = `radial-gradient(#ffffff 70%, ${config.color})`
+        var gradient = `radial-gradient(#ffffff 70%, ${toyComponentCardConfig.color})`
         domStyle.set(node, {
             background: gradient,
         })
 
-        addToyComponentDesc(node, config)
+        addToyComponentDesc(node, toyComponentCardConfig)
         return node
     }
 
-    function addBack(parent, title, color, opt_configs) {
-		var configs = opt_configs ? opt_configs : {}
+    function addBack(parent, title, color) {
+		var configs = gameUtils.getConfigs()
 		var node = gameUtils.addCard(parent, ["back", "toyComponent"], "back")
 
 		cards.setCardSize(node, configs)
@@ -147,7 +134,7 @@ define([
 
         gameUtils.addImage(innerNode, ["santa"], "santa")
 
-		var title = gameUtils.addDiv(innerNode, ["cardTitle"], "cardTitle", title)
+		var title = gameUtils.addDiv(innerNode, ["cardBackTitle"], "cardBackTitle", title)
 		var style = {}
 		style["font-size"] = configs.bigCards ? `${gameUtils.bigCardBackFontSize}px`: `${gameUtils.cardBackFontSize}px`
 		domStyle.set(title, style)
@@ -155,33 +142,25 @@ define([
 		return node
     }
 
-    function getCountOfCard(ttsCards, config) {
-        if (ttsCards) {
-            return 1
-        }
-        var maxPlayers = 8
-        var retVal
-        switch(config.playType) {
+    function calculatePlayerBasedInstanceCount(toyComponentCardConfig) {
+        switch(toyComponentCardConfig.playType) {
             case "normal":
                 {
-                    var scale = -1.5 * config.craft.points + 9
-                    retVal = scale * maxPlayers + 1
+                    var scale = -1.5 * toyComponentCardConfig.craft.points + 9
+                    retVal = Math.ceil(scale * gameInfo.maxPlayers + 1)
                 }
                 break
             case "challenge":
                 {
-                    retVal = 4 * Math.floor(maxPlayers/2) + 2
+                    retVal = 4 * Math.ceil(gameInfo.maxPlayers/2) + 2
                 }
                 break
             default:
                 {
-                    retVal = Math.ceil(maxPlayers/2)
+                    retVal = Math.ceil(gameInfo.maxPlayers/2)
                 }
                 break
         }
-
-        console.log("Doug: config.class = ", config.class)
-        console.log("Doug: retVal = ", retVal)
         return retVal
     }
 
@@ -189,6 +168,6 @@ define([
     return {
 		addToyComponentCard: addToyComponentCard,
         addBack: addBack,
-        getCountOfCard: getCountOfCard,
+        calculatePlayerBasedInstanceCount: calculatePlayerBasedInstanceCount,
 	};
 });

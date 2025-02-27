@@ -115,11 +115,12 @@
     justify-content: center;
 }
 
-.card.back.toyComponent .inset .cardTitle {
+.card.back.toyComponent .inset .cardBackTitle {
 	font-size: 40px;
 	font-family: "Mountains of Christmas", serif;
     text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
 	font-weight: bold;
+    white-space: wrap;
 }
 
 .card.back.toyComponent .inset .santa {

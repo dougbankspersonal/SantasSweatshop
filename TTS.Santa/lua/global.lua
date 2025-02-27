@@ -16,12 +16,12 @@ Enums
 -- Flagged debug system.
 -- Keep these alphabetized.
 local activeDebugTags = {
-    BidInputPanel = false,
+    BidInputPanel = true,
     ButtonConfiguration = false,
-    GameDeckPlacement = true,
+    GameDeckPlacement = false,
     PanelVisibility = false,
     SourceDeckCreation = false,
-    StateMachine = false,
+    StateMachine = true,
     Timing = false,
     UIStateResponse = false,
     XMLTableBuilding = false,
@@ -338,6 +338,13 @@ local function debugPrint(debugTag, ...)
     end
 end
 
+local function debugDump(debugTag, ...)
+    if activeDebugTags[debugTag] then
+        print(debugTag .. ":")
+        dump(...)
+    end
+end
+
 --[[--------------------------
 
 Functions
@@ -488,12 +495,8 @@ end
 -- opt_onRegisteredCallbacksCalled: optional arg.  Once the state change has finished
 -- pinging all UI-related listners, this callback will be hit.
 local function setPrivateState(stateDictionary, opt_onRegisteredCallbacksCalled)
-    if stateDictionary.appState then
-        debugPrint("StateMachine", "Doug: called setPrivateState")
-        if activeDebugTags.StateMachine then
-            dump(stateDictionary)
-        end
-    end
+    debugPrint("StateMachine", "Doug: called setPrivateState")
+    debugDump("StateMachine", stateDictionary)
 
     local somethingChanged = false
     for k, v in pairs(stateDictionary) do
@@ -511,12 +514,16 @@ local function setPrivateState(stateDictionary, opt_onRegisteredCallbacksCalled)
         end
 
         if _privateState[k] ~= v then
+            debugPrint("StateMachine", "Updating private state")
+            debugPrint("StateMachine", "was: ", _privateState[k])
+            debugPrint("StateMachine", "will be: " , v)
             _privateState[k] = v
             somethingChanged = true
         end
     end
 
     if not somethingChanged then
+        debugPrint("StateMachine", "Nothing changed")
         -- no-op:
         if opt_onRegisteredCallbacksCalled then
             opt_onRegisteredCallbacksCalled()
@@ -524,6 +531,7 @@ local function setPrivateState(stateDictionary, opt_onRegisteredCallbacksCalled)
         return
     end
 
+    debugPrint("StateMachine", "Calling derived state mod")
     -- allow for derived state mods.
     for _, stateModCallback in pairs(_privateState._stateModCallbacks) do
         _privateState = stateModCallback(_privateState)
@@ -538,16 +546,20 @@ local function setPrivateState(stateDictionary, opt_onRegisteredCallbacksCalled)
     --    to enqueue more callbacks.
     -- 3. When callbacks finally fire we unset the mark.
     if _privateState._uiCallbackEnqueued then
+        debugPrint("StateMachine", "callback already enqueued")
         return true
     end
+    debugPrint("StateMachine", "enqueuing callback")
     _privateState._uiCallbackEnqueued = true
 
     Wait.time(function()
         --- Hit all the callbacks.
+        debugPrint("StateMachine", "calling ui callbacks")
         for _, uiCallback in pairs(_privateState._uiCallbacks) do
             uiCallback(_privateState)
         end
 
+        debugPrint("StateMachine", "enqueuing resolved")
         _privateState._uiCallbackEnqueued  = false
         if opt_onRegisteredCallbacksCalled then
             opt_onRegisteredCallbacksCalled()
@@ -2261,13 +2273,17 @@ function cleanup()
 end
 
 function toggleBiddingOpen()
+    debugPrint("BidInputPanel", "Doug: toggleBiddingOpen")
     if not isBottomButtonEnabled(toggleBiddingOpenButtonId) then
+        debugPrint("BidInputPanel", "Doug: toggleBiddingOpen 001")
         return
     end
 
     local bio = getPrivateState("biddingIsOpen")
-    print("Doug: toggleBiddingIsOpen: bio = ", bio)
-    setPrivateState({biddingIsOpen = not bio})
+    debugPrint("BidInputPanel", "Doug: toggleBiddingIsOpen: bio = ", bio)
+    local toggledBio = (not bio)
+    debugPrint("BidInputPanel", "Doug: toggleBiddingIsOpen: toggledBio = ", toggledBio)
+    setPrivateState({biddingIsOpen = toggledBio})
 end
 
 function toggleBidViewPanel()

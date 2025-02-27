@@ -3,8 +3,9 @@ define([
 	'dojo/dom-construct',
 	'dojo/dom-style',
 	"dojo/query",
+	'javascript/debugLog',
 	'dojo/domReady!'
-], function(dom, domConstruct, domStyle, query) {
+], function(dom, domConstruct, domStyle, query, debugLog) {
 	var pixelsPerInch = 300
 	var pageNumber = 0
 	var cardNumber = 0
@@ -69,6 +70,7 @@ define([
 
 	var ttsCardPageWidth = 10 * cardWidth
 	var ttsBigCardPageWidth = 10 * bigCardWidth
+	var nullPageWidth = "nullPageWidth"
 
 	var boxesRowMarginTop = 5
 
@@ -193,25 +195,14 @@ define([
 	}
 
 	function getPageWidth(configs) {
-		if (configs.landscape) {
-			return printedPageLandscapeWidth
+		if (configs.pageWidth) {
+			return configs.pageWidth
+		} else if (configs.nullPageWidth) {
+			return null
+		} else {
+			return printedPagePortraitWidth
 		}
-
-		if (configs.ttsCards) {
-			if (configs.bigCards) {
-				return ttsBigCardPageWidth
-			} else {
-				return ttsCardPageWidth
-			}
-		}
-
-		if (configs.ttsDie) {
-			return dieColulmnsAcross * dieWidth
-		}
-
-		return printedPagePortraitWidth
 	}
-
 
 	var getPageHeight = function() {
 		if (configs.landscape) {
@@ -225,8 +216,10 @@ define([
 		var pageId = "pageOfItems_".concat(pageNumber.toString())
 		pageNumber++
 
+		var configs = getConfigs()
 		var pageOfItems = addDiv(parent, classArray, pageId)
-		if (configs.ttsCards || configs.ttsDie) {
+		debugLog.debugLog("Cards", `addPageOfItems configs = ${JSON.stringify(configs)}`)
+		if (configs.pageOfItemsIsInlineBlock) {
 			domStyle.set(pageOfItems, {
 				display: "inline-block",
 			})
@@ -234,10 +227,10 @@ define([
 
 		var pageOfItemsContents = addDiv(pageOfItems, ["pageOfItemsContents"], "pageOfItemsContents")
 
-		var width = getPageWidth(configs)
-		var height = getPageHeight(configs)
+		var pageWidth = getPageWidth(configs)
+		var pagehHeight = getPageHeight(configs)
 
-		if (configs.ttsCards || configs.ttsDie) {
+		if (configs.skipPadding) {
 			domStyle.set(pageOfItemsContents, {
 				position: "relative",
 				top: "0px",
@@ -254,13 +247,21 @@ define([
 			})
 		}
 
-		domStyle.set(pageOfItemsContents, {
-			width: width + "px",
-		})
-
-		if (height !== null) {
+		if (configs.pageWidth == nullPageWidth) {
 			domStyle.set(pageOfItemsContents, {
-				height: height + "px",
+				"white-space": "nowrap",
+			})
+		}
+
+		if (pageWidth !== null) {
+			domStyle.set(pageOfItemsContents, {
+				width: pageWidth + "px",
+			})
+		}
+
+		if (pagehHeight !== null) {
+			domStyle.set(pageOfItemsContents, {
+				height: pagehHeight + "px",
 			})
 		}
 		return pageOfItemsContents
@@ -284,7 +285,7 @@ define([
 			cardNumber++
 		}
 		var node = addDiv(parent, classArray, cardId)
-		if (configs.ttsCards) {
+		if (configs.skipPadding) {
 			domStyle.set(node, {
 				"margin-bottom": "0px",
 				"margin-right": "0px",
@@ -336,6 +337,25 @@ define([
 		return Math.floor(Math.random() * max);
 	}
 
+	function seededRandom(seed) {
+		let currentSeed = seed;
+
+		// Simple linear congruential generator (LCG)
+		return function() {
+			currentSeed = (currentSeed * 9301 + 49297) % 233280;
+			return currentSeed / 233280;
+		}
+	}
+
+	const tiltRandom = seededRandom(234232443);
+	function addQuasiRandomTilt(node, minTilt, maxTilt) {
+		var zeroToOneRandom = tiltRandom()
+		var tilt = minTilt + zeroToOneRandom * (maxTilt - minTilt)
+		domStyle.set(node, {
+			transform: `rotate(${tilt}deg)`,
+		})
+	}
+
 	var cardSlotOutlineHeight = 4
 
 	var beltSegmentZIndex = 1000000
@@ -349,6 +369,38 @@ define([
 	var beltSegmentOffset = standardRowHeight/beltSegmentsPerRow
 	var beltSegmentHeight = beltSegmentOffset + 2
 	var beltSegmentWidth = 40
+
+	// Configs:
+	// At the very start call setConfigs, pass in various tweakables.
+	//
+	// Here's what to use for different needs:
+	//
+	// For any tts, or an array of cards, add:
+	/*
+	configs.skipPadding = true
+	configs.cardsPerPage = cards.ttsCardsPerPage
+	configs.skipBacks = true
+	configs.pageOfItemsIsInlineBlock = true
+	configs.singleCardInstance = true
+	*/
+	// tts big cards add
+	/*
+	configs.bigCards = true
+	configs.pageWidth = gameUtils.ttsBigCardPageWidth
+	*/
+	// tts small cards add
+	/*
+	configs.pageWidth = gameUtils.ttsCardPageWidth
+	*/
+	// tts die add
+	/*
+	configs.pageWidth = gameUtils.dieColulmnsAcross * gameUtils.dieWidth
+	*/
+	// Array of cards add
+	/*
+	configs.bigCards = true
+	configs.pageWidth = gameUtils.nullPageWidth
+	*/
 
 	function setConfigs(c) {
 		configs = c
@@ -432,6 +484,11 @@ define([
 		pageWidthPadding: pageWidthPadding,
 		pageHeightPadding: pageHeightPadding,
 		pixelsPerInch: pixelsPerInch,
+		ttsBigCardPageWidth: ttsBigCardPageWidth,
+		nullPageWidth: nullPageWidth,
+		ttsCardPageWidth: ttsCardPageWidth,
+		dieColulmnsAcross: dieColulmnsAcross,
+		dieWidth: dieWidth,
 
 		addDiv: addDiv,
 		addImage: addImage,
@@ -440,6 +497,8 @@ define([
 		addCard: addCard,
 		blendHexColors: blendHexColors,
 		getRandomInt: getRandomInt,
+		seededRandom: seededRandom,
+		addQuasiRandomTilt: addQuasiRandomTilt,
 		setConfigs: setConfigs,
 		getConfigs: getConfigs,
 		getSlot: getSlot,

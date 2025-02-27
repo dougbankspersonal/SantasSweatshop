@@ -36,74 +36,12 @@
     <script>
 		require([
 			'javascript/cards',
-            'javascript/toyComponentCards',
+			'javascript/debugLog',
+			'javascript/toyComponentCards',
 			'javascript/gameUtils',
-		], function (cards, toyComponentCards, gameUtils, dojo) {
-
-			var ttsCards = true
-			var noBacks = true
+		], function (cards, debugLog, toyComponentCards, gameUtils, dojo) {
 
             var toyComponentCardConfigs = [
-			{
-                    title: "Doll",
-                    class: "doll",
-					image: "../images/ToyComponents/doll.png",
-                    craft: {
-						number: 3,
-						points: 2,
-					},
-					floor: -2,
-					playType: "normal",
-					color: "#9B111E",
-                },
-				{
-                    title: "Doll",
-                    class: "doll",
-					image: "../images/ToyComponents/doll.png",
-                    craft: {
-						number: 3,
-						points: 2,
-					},
-					floor: -2,
-					playType: "normal",
-					color: "#9B111E",
-                },
-				{
-                    title: "Doll",
-                    class: "doll",
-					image: "../images/ToyComponents/doll.png",
-                    craft: {
-						number: 3,
-						points: 2,
-					},
-					floor: -2,
-					playType: "normal",
-					color: "#9B111E",
-                },
-				{
-                    title: "Doll",
-                    class: "doll",
-					image: "../images/ToyComponents/doll.png",
-                    craft: {
-						number: 3,
-						points: 2,
-					},
-					floor: -2,
-					playType: "normal",
-					color: "#9B111E",
-                },
-				{
-                    title: "Doll",
-                    class: "doll",
-					image: "../images/ToyComponents/doll.png",
-                    craft: {
-						number: 3,
-						points: 2,
-					},
-					floor: -2,
-					playType: "normal",
-					color: "#9B111E",
-                },
 				{
                     title: "Doll",
                     class: "doll",
@@ -239,26 +177,55 @@
 					color: "#FFD700",
                 },*/
             ]
-			function addToyComponentCard(parent, index) {
-				return toyComponentCards.addToyComponentCard(parent, index, ttsCards, toyComponentCardConfigs)
+			function _addToyComponentCard(parent, index) {
+				var toyComponentCardConfig = cards.getCardConfigFromIndex(toyComponentCardConfigs, index)
+				debugLog.debugLog("Cards", "Doug: _addToyComponentCard: index = " + index)
+				debugLog.debugLog("Cards", "Doug: _addToyComponentCard: toyComponentCardConfigs = " + JSON.stringify(toyComponentCardConfigs))
+
+				return toyComponentCards.addToyComponentCard(parent, toyComponentCardConfig, index)
 			}
 
-			function addBack(parent, title, color, opt_configs) {
-				return toyComponentCards.addBack(parent, title, color, opt_configs)
+			function _addBack(parent, title, color) {
+				return toyComponentCards.addBack(parent, title, color)
 			}
 
-			var numToyParts = 0
-			for (var i = 0; i < toyComponentCardConfigs.length; i++) {
-				var numberPerPlayer = toyComponentCards.getCountOfCard(ttsCards, toyComponentCardConfigs[i])
-				numToyParts += numberPerPlayer
-			}
-
-			cards.addCards("Santa's Sweatshop", "#228b22", numToyParts, addToyComponentCard,  {
-            	ttsCards: ttsCards,
+			// See gameUtils.setConfigs for more details on configs.
+			// This is the TTS config.
+			var ttsConfigs = {
+				skipPadding: true,
+				cardsPerPage: cards.ttsCardsPerPage,
+				skipBacks: true,
+				pageOfItemsIsInlineBlock: true,
+				singleCardInstance: true,
 				bigCards: true,
-				noBacks: noBacks,
-				addBackOverride: addBack,
-            })
+				pageWidth: gameUtils.ttsBigCardPageWidth,
+				addBackOverride: _addBack,
+			}
+			var nonTTSConfigs = {
+				cardsPerPage: cards.bigCardsPerPage,
+				bigCards: true,
+				addBackOverride: _addBack,
+			}
+			gameUtils.setConfigs(nonTTSConfigs)
+			var configs = gameUtils.getConfigs()
+
+			for (var i = 0; i < toyComponentCardConfigs.length; i++) {
+				debugLog.debugLog("Cards", "Doug: i = " + i)
+				var instanceCount
+				if (configs.singleCardInstance) {
+					instanceCount = cards.getInstanceCountFromConfig(toyComponentCardConfigs, i)
+				} else {
+					instanceCount = toyComponentCards.calculatePlayerBasedInstanceCount(toyComponentCardConfigs[i])
+				}
+				toyComponentCardConfigs[i].instanceCount = instanceCount
+			}
+
+			debugLog.debugLog("Summary", "Doug: toyComponentCardConfigs = " + JSON.stringify(toyComponentCardConfigs))
+
+			var numCards = cards.getNumCardsFromConfigs(toyComponentCardConfigs)
+			debugLog.debugLog("Summary", "Doug: numCards = " + numCards)
+
+			cards.addCards("Santa's Sweatshop", "#228b22", numCards, _addToyComponentCard, configs)
 		});
     </script>
 </body>
