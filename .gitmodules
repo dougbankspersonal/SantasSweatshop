@@ -1,0 +1,3 @@
+[submodule "Html.Santa/SharedBoardgame"]
+	path = Html.Santa/SharedBoardgame
+	url = https://github.com/dougbankspersonal/SharedWebBoardgame
