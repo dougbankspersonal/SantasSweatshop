@@ -3,7 +3,7 @@ define([
   "dojo/dom",
   "dojo/dom-style",
   "javascript/gameUtils",
-  "javascript/debugLog",
+  "sharedJavascript/debugLog",
   "dojo/domReady!",
 ], function (string, dom, domStyle, gameUtils, debugLog) {
   var adjustedPageWidth =
@@ -25,12 +25,9 @@ define([
   var ttsCardsPerPage = 70;
 
   function setCardSize(node) {
-    var configs = gameUtils.getConfigs();
-    debugLog.debugLog(
-      "Cards",
-      "Doug: setCardSize: configs = " + JSON.stringify(configs)
-    );
-    if (configs.bigCards) {
+    var sc = gameUtils.getSystemConfigs();
+    debugLog.debugLog("Cards", "Doug: setCardSize: sc = " + JSON.stringify(sc));
+    if (sc.bigCards) {
       debugLog.debugLog(
         "Cards",
         "Doug: using bigCardWidth = " + String(gameUtils.bigCardWidth)
@@ -74,39 +71,37 @@ define([
   }
 
   function addCardFront(parent, classArray, id) {
-    var configs = gameUtils.getConfigs();
     classArray.push("front");
     var node = gameUtils.addCard(parent, classArray, id);
-    setCardSize(node, configs);
+    setCardSize(node);
 
     return node;
   }
 
-  function addCards(title, color, numCards, contentCallback, opt_configs) {
+  function addCards(title, color, numCards, contentCallback) {
     var bodyNode = dom.byId("body");
-    var configs = opt_configs ? opt_configs : {};
-    gameUtils.setConfigs(configs);
+    var sc = systemConfigs.getSystemConfigs();
 
     var pageOfFronts;
     var pageOfBacks;
 
     var cardsPerPage;
-    if (configs.cardsPerPage) {
-      cardsPerPage = configs.cardsPerPage;
+    if (sc.cardsPerPage) {
+      cardsPerPage = sc.cardsPerPage;
     } else {
       cardsPerPage = defaultCardsPerPage;
     }
 
     var addBackFunction;
-    if (configs.addBackOverride) {
-      addBackFunction = configs.addBackOverride;
+    if (sc.addBackOverride) {
+      addBackFunction = sc.addBackOverride;
     } else {
       addBackFunction = addCardBack;
     }
 
-    var shouldAddBacks = !configs.skipBacks;
+    var shouldAddBacks = !sc.skipBacks;
 
-    if (configs.separateBacks) {
+    if (sc.separateBacks) {
       for (let i = 0; i < numCards; i++) {
         var timeForNewPage = i % cardsPerPage;
         if (timeForNewPage == 0) {

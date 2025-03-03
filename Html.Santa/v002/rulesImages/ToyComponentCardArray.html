@@ -1,239 +1,254 @@
 <html>
-<head>
-	<link rel="stylesheet" href="../../css/main.css">
-	<link rel="stylesheet" href="../../css/card.css">
-	<link rel="stylesheet" href="../../css/toyComponent.css">
-	<link rel="stylesheet" href="../../css/image.css">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&display=swap" rel="stylesheet">
-	<meta content="text/html; charset=UTF-8" http-equiv="content-type">
-    <style type="text/css">
-	</style>
-</head>
+  <head>
+    <link rel="stylesheet" href="../../css/main.css" />
+    <link rel="stylesheet" href="../../css/card.css" />
+    <link rel="stylesheet" href="../../css/toyComponent.css" />
+    <link rel="stylesheet" href="../../css/image.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+    <style type="text/css"></style>
+  </head>
 
-<body id="body">
-	<!-- configure Dojo -->
-	<script>
-		// Instead of using data-dojo-config, we're creating a dojoConfig
-		// object *before* we load dojo.js; they're functionally identical,
-		// it's just easier to read this approach with a larger configuration.
-		var dojoConfig = {
-			baseUrl: "../..",
-			async: true,
-			// This code registers the correct location of the "demo"
-			// package so we can load Dojo from the CDN whilst still
-			// being able to load local modules
-			packages: [
-				{ name: "dojo", location: "../../bower_components/dojo" },
-				{ name: "javascript", location: "javascript" }
-			]
-		};
-	</script>
-	<!-- load Dojo -->
-	<script src="../../../../bower_components/dojo/dojo.js"></script>
+  <body id="body">
+    <!-- configure Dojo -->
+    <script>
+      // Instead of using data-dojo-config, we're creating a dojoConfig
+      // object *before* we load dojo.js; they're functionally identical,
+      // it's just easier to read this approach with a larger configuration.
+      var dojoConfig = {
+        baseUrl: "../..",
+        async: true,
+        // This code registers the correct location of the "demo"
+        // package so we can load Dojo from the CDN whilst still
+        // being able to load local modules
+        packages: [
+          { name: "dojo", location: "../../bower_components/dojo" },
+          { name: "javascript", location: "javascript" },
+        ],
+      };
+    </script>
+    <!-- load Dojo -->
+    <script src="../../../../bower_components/dojo/dojo.js"></script>
 
     <script>
-		require([
-			'javascript/cards',
-            'javascript/toyComponentCards',
-			'javascript/gameUtils',
-			'javascript/debugLog',
-			'dojo/dom',
-			'dojo/dom-style',
-		], function (cards, toyComponentCards, gameUtils, debugLog, dom, domStyle, dojo) {
-			var ttsCards = true
-			var skipBacks = true
+      require([
+        "javascript/toyComponentCards",
+        "javascript/gameUtils",
+        "sharedJavascript/debugLog",
+        "sharedJavascript/cards",
+        "dojo/dom",
+        "dojo/dom-style",
+      ], function (
+        toyComponentCards,
+        gameUtils,
+        debugLog,
+        cards,
+        dom,
+        domStyle,
+        dojo
+      ) {
+        var ttsCards = true;
+        var skipBacks = true;
 
-            var toyComponentCardConfigs = [
-				{
-                    title: "Doll",
-                    class: "doll",
-					image: "../../images/ToyComponents/doll.png",
-                    craft: {
-						number: 3,
-						points: 2,
-					},
-					floor: -2,
-					playType: "normal",
-					color: "#9B111E",
-                },
-                {
-                    title: "Kite",
-                    class: "kite",
-					image: "../../images/ToyComponents/kite.png",
-                    craft: {
-						number: 3,
-						points: 3,
-					},
-					floor: -3,
-					playType: "normal",
-					color: "#9B111E",
-                },
-                {
-                    title: "Robot",
-                    class: "robot",
-					image: "../../images/ToyComponents/robot.png",
-                    craft: {
-						number: 3,
-						points: 4,
-					},
-					floor: -4,
-					playType: "normal",
-					color: "#9B111E",
-                },
-                {
-                    title: "Radio",
-					class: "radio",
-					image: "../../images/ToyComponents/radio.png",
-                    craft: {
-						number: 4,
-						points: 10,
-					},
-					floor: -6,
-					playType: "challenge",
-					color: "#228b22",
-                },
-                {
-                    title: "Reindeer Poop",
-                    class: "poop",
-					image: "../../images/ToyComponents/poop.png",
-                    special: "No Crafting",
-					floor: -7,
-					playType: "special",
-					color: "#593002",
-                },
-                {
-                    title: "Wrapping Paper",
-                    class: "wrappingPaper",
-					image: "../../images/ToyComponents/wrappingPaper.png",
-                    special: "x2",
-					floor: -2,
-					playType: "special",
-					color: "#FFD700",
-                },
-                {
-                    title: "Elf Magic",
-                    class: "elfMagic",
-					image: "../../images/ToyComponents/elfMagic.png",
-					specialImages: [
-						"../../images/ToyComponents/doll.png",
-						"../../images/ToyComponents/kite.png",
-						"../../images/ToyComponents/robot.png",
-					],
-					specialImagesSeparator: "/",
-					floor: -2,
-					playType: "special",
-					color: "#FFD700",
-                },
-                {
-                    title: "Broom",
-                    class: "broom",
-					image: "../../images/ToyComponents/broom.png",
-					specialImages: [
-						"../../images/ToyComponents/floor.png",
-						"../../images/ToyComponents/rightArrow.png",
-						"../../images/ToyComponents/floor.png",
-					],
-					floor: -2,
-					playType: "special",
-					color: "#FFD700",
-                },
-            ]
+        var toyComponentCardConfigs = [
+          {
+            title: "Doll",
+            class: "doll",
+            image: "../../images/ToyComponents/doll.png",
+            craft: {
+              number: 3,
+              points: 2,
+            },
+            floor: -2,
+            playType: "normal",
+            color: "#9B111E",
+          },
+          {
+            title: "Kite",
+            class: "kite",
+            image: "../../images/ToyComponents/kite.png",
+            craft: {
+              number: 3,
+              points: 3,
+            },
+            floor: -3,
+            playType: "normal",
+            color: "#9B111E",
+          },
+          {
+            title: "Robot",
+            class: "robot",
+            image: "../../images/ToyComponents/robot.png",
+            craft: {
+              number: 3,
+              points: 4,
+            },
+            floor: -4,
+            playType: "normal",
+            color: "#9B111E",
+          },
+          {
+            title: "Radio",
+            class: "radio",
+            image: "../../images/ToyComponents/radio.png",
+            craft: {
+              number: 4,
+              points: 10,
+            },
+            floor: -6,
+            playType: "challenge",
+            color: "#228b22",
+          },
+          {
+            title: "Reindeer Poop",
+            class: "poop",
+            image: "../../images/ToyComponents/poop.png",
+            special: "No Crafting",
+            floor: -7,
+            playType: "special",
+            color: "#593002",
+          },
+          {
+            title: "Wrapping Paper",
+            class: "wrappingPaper",
+            image: "../../images/ToyComponents/wrappingPaper.png",
+            special: "x2",
+            floor: -2,
+            playType: "special",
+            color: "#FFD700",
+          },
+          {
+            title: "Elf Magic",
+            class: "elfMagic",
+            image: "../../images/ToyComponents/elfMagic.png",
+            specialImages: [
+              "../../images/ToyComponents/doll.png",
+              "../../images/ToyComponents/kite.png",
+              "../../images/ToyComponents/robot.png",
+            ],
+            specialImagesSeparator: "/",
+            floor: -2,
+            playType: "special",
+            color: "#FFD700",
+          },
+          {
+            title: "Broom",
+            class: "broom",
+            image: "../../images/ToyComponents/broom.png",
+            specialImages: [
+              "../../images/ToyComponents/floor.png",
+              "../../images/ToyComponents/rightArrow.png",
+              "../../images/ToyComponents/floor.png",
+            ],
+            floor: -2,
+            playType: "special",
+            color: "#FFD700",
+          },
+        ];
 
-			var cardInstanceArray = [
-				{
-					title: "Doll",
-				},
-				{
-					title: "Kite",
-				},
-				{
-					title: "Robot",
-				},
-				{
-					title: "Kite",
-				},
-				{
-					title: "Reindeer Poop",
-				},
-				{
-					title: "Kite",
-				// sfacedown: true,
-				},
-			]
+        var cardInstanceArray = [
+          {
+            title: "Doll",
+          },
+          {
+            title: "Kite",
+          },
+          {
+            title: "Robot",
+          },
+          {
+            title: "Kite",
+          },
+          {
+            title: "Reindeer Poop",
+          },
+          {
+            title: "Kite",
+            // sfacedown: true,
+          },
+        ];
 
-			function addBack(parent, title, color, opt_configs) {
-				return toyComponentCards.addBack(parent, title, color, opt_configs)
-			}
+        function addBack(parent, title, color, opt_configs) {
+          return toyComponentCards.addBack(parent, title, color, opt_configs);
+        }
 
+        function getToyComponentCardConfig(title) {
+          for (var i = 0; i < toyComponentCardConfigs.length; i++) {
+            var toyComponentCardConfig = toyComponentCardConfigs[i];
+            if (toyComponentCardConfig.title == title) {
+              return toyComponentCardConfig;
+            }
+          }
+          return null;
+        }
 
-			function getToyComponentCardConfig(title)
-			{
-				for (var i = 0; i < toyComponentCardConfigs.length; i++) {
-					var toyComponentCardConfig = toyComponentCardConfigs[i]
-					if (toyComponentCardConfig.title == title) {
-						return toyComponentCardConfig
-					}
-				}
-				return null
-			}
+        var totalTilt = 6;
+        var minTilt = -totalTilt / 2;
+        var maxTilt = totalTilt / 2;
 
-			var totalTilt = 6
-			var minTilt = -totalTilt/2
-			var maxTilt = totalTilt/2
+        var cardSpacing = gameUtils.bigCardWidth * 0.5;
+        function modifyCardLayout(card, i) {
+          debugLog.debugLog("Cards", "Doug: modifyCardLayout: i = " + i);
+          var left = i * cardSpacing;
+          var xOffset = i * cardSpacing;
+          domStyle.set(card, {
+            zIndex: `${100 - i}`,
+            "margin-right": "-50px",
+          });
+          gameUtils.addQuasiRandomTilt(card, minTilt, maxTilt);
+        }
 
-			var cardSpacing = gameUtils.bigCardWidth * 0.5
-			function modifyCardLayout(card, i) {
-				debugLog.debugLog("Cards", "Doug: modifyCardLayout: i = " + i)
-				var left = i * cardSpacing
-				var xOffset = i * cardSpacing
-				domStyle.set(card,
-					{
-						zIndex:`${100-i}`,
-						"margin-right": "-50px",
-					}
-				)
-				gameUtils.addQuasiRandomTilt(card, minTilt, maxTilt)
-			}
+        var configs = {
+          skipPadding: true,
+          cardsPerPage: cards.ttsCardsPerPage,
+          skipBacks: true,
+          pageOfItemsIsInlineBlock: true,
+          singleCardInstance: true,
+          bigCards: true,
+          pageWidth: gameUtils.nullPageWidth,
+        };
+        gameUtils.setConfigs(configs);
 
-			var configs = {
-				skipPadding: true,
-				cardsPerPage: cards.ttsCardsPerPage,
-				skipBacks: true,
-				pageOfItemsIsInlineBlock: true,
-				singleCardInstance: true,
-				bigCards: true,
-				pageWidth: gameUtils.nullPageWidth,
-			}
-			gameUtils.setConfigs(configs)
+        var bodyNode = dom.byId("body");
+        var pageNode = gameUtils.addPageOfItems(bodyNode);
+        domStyle.set(pageNode, {
+          "margin-top": "10px",
+          "margin-bottom": "10px",
+          "margin-right": "60px",
+          "margin-left": "10px",
+        });
 
-			var bodyNode = dom.byId("body");
-			var pageNode = gameUtils.addPageOfItems(bodyNode)
-			domStyle.set(pageNode, {
-				"margin-top": "10px",
-				"margin-bottom": "10px",
-				"margin-right": "60px",
-				"margin-left": "10px",
-			})
-
-			for (var i = 0; i < cardInstanceArray.length; i++) {
-				var cardInstance = cardInstanceArray[i]
-				var card
-				if (cardInstance.facedown) {
-					card = toyComponentCards.addBack(pageNode, "Santa's Sweatshop", "#228b22", configs)
-				}
-				else {
-					var toyComponentCardConfig = getToyComponentCardConfig(cardInstance.title)
-					console.assert(toyComponentCardConfig)
-					toyComponentCardConfig.instanceCount = 1
-					card = toyComponentCards.addToyComponentCard(pageNode, toyComponentCardConfig, i)
-				}
-				// Twiddle card layout.
-				modifyCardLayout(card, i)
-			}
-		});
+        for (var i = 0; i < cardInstanceArray.length; i++) {
+          var cardInstance = cardInstanceArray[i];
+          var card;
+          if (cardInstance.facedown) {
+            card = toyComponentCards.addBack(
+              pageNode,
+              "Santa's Sweatshop",
+              "#228b22",
+              configs
+            );
+          } else {
+            var toyComponentCardConfig = getToyComponentCardConfig(
+              cardInstance.title
+            );
+            console.assert(toyComponentCardConfig);
+            toyComponentCardConfig.instanceCount = 1;
+            card = toyComponentCards.addToyComponentCard(
+              pageNode,
+              toyComponentCardConfig,
+              i
+            );
+          }
+          // Twiddle card layout.
+          modifyCardLayout(card, i);
+        }
+      });
     </script>
-</body>
-
+  </body>
 </html>
