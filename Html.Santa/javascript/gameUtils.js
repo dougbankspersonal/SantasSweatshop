@@ -3,9 +3,9 @@ define([
   "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/query",
-  "javascript/rowTypes",
   "javascript/versionDetails",
   "sharedJavascript/debugLog",
+  "sharedJavascript/genericMeasurements",
   "sharedJavascript/systemConfigs",
   "dojo/domReady!",
 ], function (
@@ -13,9 +13,9 @@ define([
   domConstruct,
   domStyle,
   query,
-  rowTypes,
   versionDetails,
   debugLog,
+  genericMeasurements,
   systemConfigs
 ) {
   var pixelsPerInch = 300;
@@ -24,46 +24,15 @@ define([
 
   var pageOfItemsContentsPaddingPx = 10;
 
-  var sidebarWidth = 360;
-  var standardBorderWidth = 2;
-
   // Slots, elements, tiles.
   var slotWidth = 180;
 
   var elementHeight = slotWidth - 20;
   var elementWidth = elementHeight;
 
-  var conveyorTileOnBoardLeftMargin = 20;
-  var conveyorTileOnBoardTopMargin = 10;
-
   var dieWidth = 150;
   var dieHeight = dieWidth;
   var dieColulmnsAcross = 3;
-
-  // For a tile, it lays across two side by side slots:
-  //
-  // Slots: +------a------+------a------+
-  // Tile : +-c-+---------b---------+-c-+
-  // Where a is slotWidth, b is conveyorTileWidth, and c is conveyorTileOnBoardLeftMargin.
-  // So...
-  var conveyorTileWidth = 2 * (slotWidth - conveyorTileOnBoardLeftMargin);
-  var conveyorTileHeight =
-    rowTypes.standardRowHeight - 2 * conveyorTileOnBoardTopMargin;
-
-  // So we have this:
-  // +------a------+------a------+
-  // +-c-+---------b---------+-c-+
-  // where b is the width of a tile, and c is conveyorTileOnBoardLeftMargin.
-  // There's also a margin:
-  var conveyorTileBorder = 2;
-
-  // Border on both sides: the space inside the tile is actually this big:
-  var conveyorTileInnerWidth = conveyorTileWidth - 2 * conveyorTileBorder;
-
-  // So if belt elements are children of the tile div, what is the position that'd
-  // put the belt in the center of a slot?
-  var beltCenterOffsetInConveyorTile =
-    slotWidth / 2 - conveyorTileOnBoardLeftMargin - conveyorTileBorder;
 
   var printedPagePortraitWidth = 816;
   var printedPagePortraitHeight = 1056;
@@ -81,41 +50,9 @@ define([
   var cardHeight = 1.4 * smallCardHeight;
   var cardBackFontSize = cardWidth * 0.2;
 
-  var ttsSmallCardPageWidth = 10 * smallCardWidth;
-  var ttsCardPageWidth = 10 * cardWidth;
-
   var boxesRowMarginTop = 5;
 
-  var nutTypeAlmond = "Almond";
-  var nutTypeCashew = "Cashew";
-  var nutTypePeanut = "Peanut";
-  var nutTypePistachio = "Pistachio";
-
-  var nutTypes = [
-    nutTypeAlmond,
-    nutTypeCashew,
-    nutTypePeanut,
-    nutTypePistachio,
-  ];
-
   var starImage = "images/Markers/Star.png";
-  var salterImage = "images/Markers/Salter.png";
-  var squirrelImage = "images/Markers/Squirrel.png";
-
-  var saltedTypes = ["Salted", "Unsalted"];
-
-  var roastedTypes = ["Roasted", "Raw"];
-
-  var saltedTypeImages = [
-    "images/NutProps/Salted.Y.png",
-    "images/NutProps/Salted.N.png",
-  ];
-  var roastedTypeImages = [
-    "images/NutProps/Roasted.Y.png",
-    "images/NutProps/Roasted.N.png",
-  ];
-
-  var wildImage = "images/Order/Order.Wild.png";
 
   function addDiv(parent, classArray, id, opt_innerHTML = "") {
     console.assert(parent, "parent is null");
@@ -134,7 +71,7 @@ define([
 
   function addStandardBorder(node) {
     domStyle.set(node, {
-      border: standardBorderWidth + "px solid black",
+      border: genericMeasurements.standardBorderWidth + "px solid black",
     });
   }
 
@@ -210,27 +147,8 @@ define([
   }
 
   function getPageWidth(configs) {
-    if (configs.demoBoard) {
-      var demoBoardWidth =
-        sidebarWidth +
-        versionDetails.getTotalNumColumns() * slotWidth +
-        2 * standardBorderWidth;
-      return demoBoardWidth;
-    }
     if (configs.landscape) {
       return printedPageLandscapeWidth;
-    }
-
-    if (configs.ttsCards) {
-      if (configs.smallCards) {
-        return ttsSmallCardPageWidth;
-      } else {
-        return ttsCardPageWidth;
-      }
-    }
-
-    if (configs.ttsDie) {
-      return dieColulmnsAcross * dieWidth;
     }
 
     return printedPagePortraitWidth;
@@ -241,25 +159,7 @@ define([
     if (sc.landscape) {
       return printedPageLandscapeHeight;
     }
-    if (sc.demoBoard) {
-      var orderedRowTypes = versionDetails.getOrderedRowTypes();
-      var numRows = orderedRowTypes.length;
-      var lastRowType = orderedRowTypes[numRows - 1];
-      if (lastRowType == rowTypes.RowTypes.Boxes) {
-        var numNonOrderRows = numRows - 1;
-        return (
-          2 * standardBorderWidth +
-          numNonOrderRows * rowTypes.standardRowHeight +
-          boxesRowMarginTop +
-          cardBorderWidth +
-          smallCardHeight +
-          cardBorderWidth
-        );
-      } else {
-        return numRows * rowTypes.standardRowHeight;
-      }
-    }
-    return null;
+    return printedPagePortraitHeight;
   };
 
   function addPageOfItems(parent, opt_classArray) {
@@ -415,18 +315,6 @@ define([
 
   var cardSlotOutlineHeight = 4;
 
-  var beltSegmentZIndex = 1000000;
-  var beltZIndex = 2;
-  var elementZIndex = beltZIndex + 1;
-  var markerZIndex = elementZIndex + 1;
-  var conveyorTileZIndex = markerZIndex + 1;
-  var arrowZIndex = conveyorTileZIndex + 1;
-
-  var beltSegmentsPerRow = 8;
-  var beltSegmentOffset = rowTypes.standardRowHeight / beltSegmentsPerRow;
-  var beltSegmentHeight = beltSegmentOffset + 2;
-  var beltSegmentWidth = 40;
-
   function getIndexForFirstRowType(orderedRowTypes, thisRowType) {
     for (var i = 0; i < orderedRowTypes.length; i++) {
       var rowType = orderedRowTypes[i];
@@ -445,28 +333,10 @@ define([
   // This returned object becomes the defined value of this module
   return {
     slotWidth: slotWidth,
-    standardBorderWidth: standardBorderWidth,
-    beltCenterOffsetInConveyorTile: beltCenterOffsetInConveyorTile,
     elementHeight: elementHeight,
     elementWidth: elementWidth,
     arrowWidth: elementWidth / 2,
     arrowHeight: elementHeight / 2,
-    elementTopAndBottomMargin: (rowTypes.standardRowHeight - elementHeight) / 2,
-    elementLeftAndRightMargin: (slotWidth - elementWidth) / 2,
-    conveyorTileWidth: conveyorTileWidth,
-    conveyorTileHeight: conveyorTileHeight,
-    conveyorTileBorder: conveyorTileBorder,
-    conveyorTileInnerWidth: conveyorTileInnerWidth,
-    beltSegmentZIndex: beltSegmentZIndex,
-    beltSegmentsPerRow: beltSegmentsPerRow,
-    beltSegmentOffset: beltSegmentOffset,
-    beltSegmentHeight: beltSegmentHeight,
-    beltSegmentWidth: beltSegmentWidth,
-
-    nutTypeAlmond: nutTypeAlmond,
-    nutTypeCashew: nutTypeCashew,
-    nutTypePeanut: nutTypePeanut,
-    nutTypePistachio: nutTypePistachio,
 
     smallCardHeight: smallCardHeight,
     smallCardWidth: smallCardWidth,
@@ -476,7 +346,6 @@ define([
     cardWidth: cardWidth,
     cardBackFontSize: cardBackFontSize,
 
-    nutTypes: nutTypes,
     starImage: starImage,
     salterImage: salterImage,
     squirrelImage: squirrelImage,
@@ -495,11 +364,6 @@ define([
     elementZIndex: elementZIndex,
     markerZIndex: markerZIndex,
     arrowZIndex: arrowZIndex,
-    conveyorTileZIndex: conveyorTileZIndex,
-    beltZIndex: beltZIndex,
-    conveyorTileOnBoardLeftMargin: conveyorTileOnBoardLeftMargin,
-    conveyorTileOnBoardTopMargin: conveyorTileOnBoardTopMargin,
-    sidebarWidth: sidebarWidth,
     printedPagePortraitWidth: printedPagePortraitWidth,
     printedPagePortraitHeight: printedPagePortraitHeight,
     printedPageLandscapeWidth: printedPageLandscapeWidth,
