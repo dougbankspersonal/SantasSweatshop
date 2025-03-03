@@ -9,9 +9,148 @@ define([
   "dojo/dom-style",
   "dojo/domReady!",
 ], function (gameInfo, gameUtils, cards, debugLog, string, domStyle) {
+  // Constants
   var minicardWidth = 30;
   var minicardHeight = minicardWidth * 1.4;
 
+  var toyComponentCardConfigs = [
+    {
+      title: "Doll",
+      class: "doll",
+      image: "../images/ToyComponents/doll.png",
+      craft: {
+        number: 3,
+        points: 2,
+      },
+      floor: -2,
+      playType: "normal",
+      color: "#9B111E",
+    },
+    {
+      title: "Kite",
+      class: "kite",
+      image: "../images/ToyComponents/kite.png",
+      craft: {
+        number: 3,
+        points: 3,
+      },
+      floor: -3,
+      playType: "normal",
+      color: "#9B111E",
+    },
+    {
+      title: "Robot",
+      class: "robot",
+      image: "../images/ToyComponents/robot.png",
+      craft: {
+        number: 3,
+        points: 4,
+      },
+      floor: -4,
+      playType: "normal",
+      color: "#9B111E",
+    },
+    {
+      title: "Radio",
+      class: "radio",
+      image: "../images/ToyComponents/radio.png",
+      craft: {
+        number: 4,
+        points: 10,
+      },
+      floor: -6,
+      playType: "challenge",
+      color: "#228b22",
+    },
+    /*     {
+                   title: "Matryoshka",
+                   class: "matryoshka",
+        image: "../images/ToyComponents/matryoshka.png",
+                   craft: {
+          number: 4,
+          plus: true,
+          pointsPerCard: 2,
+        },
+        floor: -6,
+        playType: "challenge",
+        color: "#228b22",
+               },
+    */
+    {
+      title: "Reindeer Poop",
+      class: "poop",
+      image: "../images/ToyComponents/poop.png",
+      special: "No Crafting",
+      floor: -7,
+      playType: "special",
+      color: "#593002",
+    },
+    {
+      title: "Wrapping Paper",
+      class: "wrappingPaper",
+      image: "../images/ToyComponents/wrappingPaper.png",
+      special: "x2",
+      floor: -2,
+      playType: "special",
+      color: "#FFD700",
+    },
+    {
+      title: "Elf Magic",
+      class: "elfMagic",
+      image: "../images/ToyComponents/elfMagic.png",
+      specialImages: [
+        "../images/ToyComponents/doll.png",
+        "../images/ToyComponents/kite.png",
+        "../images/ToyComponents/robot.png",
+      ],
+      specialImagesSeparator: "/",
+      floor: -2,
+      playType: "special",
+      color: "#FFD700",
+    },
+    {
+      title: "Broom",
+      class: "broom",
+      image: "../images/ToyComponents/broom.png",
+      specialImages: [
+        "../images/ToyComponents/floor.png",
+        "../images/ToyComponents/rightArrow.png",
+        "../images/ToyComponents/floor.png",
+      ],
+      floor: -2,
+      playType: "special",
+      color: "#FFD700",
+    },
+    /*
+               {
+                   title: "Gloves",
+                   class: "gloves",
+        image: "../images/ToyComponents/gloves.png",
+        specialImages: [
+          "../images/ToyComponents/floor.png",
+          "../images/ToyComponents/rightArrow.png",
+          "../images/ToyComponents/workbench.png",
+        ],
+        floor: -10,
+        playType: "special",
+        color: "#FFD700",
+               },
+               {
+                   title: "Fruitcake",
+                   class: "fruitcake",
+        image: "../images/ToyComponents/fruitcake.png",
+        specialImages: [
+          "../images/ToyComponents/fruitcake.png",
+          "../images/ToyComponents/doubleArrow.png",
+          "card",
+        ],
+        floor: -10,
+        playType: "special",
+        color: "#FFD700",
+               },*/
+  ];
+
+  // Functions
   function makeMinicard(parent) {
     var minicard = gameUtils.addDiv(parent, ["minicard"], "minicard");
     domStyle.set(minicard, {
@@ -21,7 +160,7 @@ define([
     return minicard;
   }
 
-  function addToyComponentDesc(parent, toyComponentCardConfig) {
+  function addToyComponentFields(parent, toyComponentCardConfig) {
     var wrapper = gameUtils.addDiv(parent, ["wrapper"], "wrapper");
     if (toyComponentCardConfig.title) {
       var imageNode = gameUtils.addDiv(wrapper, ["title"], "title");
@@ -131,28 +270,6 @@ define([
     }
   }
 
-  function addToyComponentCard(parent, toyComponentCardConfig, idHelper) {
-    debugLog.debugLog(
-      "Cards",
-      "Doug addToyComponentCard toyComponentCardConfig = " +
-        JSON.stringify(toyComponentCardConfig)
-    );
-    var idElements = ["toyComponent", idHelper.toString()];
-    var id = idElements.join(".");
-    var classArray = [];
-    classArray.push("toyComponent");
-    classArray.push(toyComponentCardConfig.class);
-    var node = cards.addCardFront(parent, classArray, id);
-
-    var gradient = `radial-gradient(#ffffff 70%, ${toyComponentCardConfig.color})`;
-    domStyle.set(node, {
-      background: gradient,
-    });
-
-    addToyComponentDesc(node, toyComponentCardConfig);
-    return node;
-  }
-
   function addBack(parent, title, color) {
     var configs = gameUtils.getConfigs();
     var node = gameUtils.addCard(parent, ["back", "toyComponent"], "back");
@@ -202,6 +319,42 @@ define([
         break;
     }
     return retVal;
+  }
+
+  function _addToyComponentCard(parent, index) {
+    var toyComponentCardConfig = cards.getCardConfigFromIndex(
+      toyComponentCardConfigs,
+      index
+    );
+    debugLog.debugLog("Cards", "Doug: _addToyComponentCard: index = " + index);
+    debugLog.debugLog(
+      "Cards",
+      "Doug: _addToyComponentCard: toyComponentCardConfigs = " +
+        JSON.stringify(toyComponentCardConfigs)
+    );
+
+    debugLog.debugLog(
+      "Cards",
+      "Doug addToyComponentCard toyComponentCardConfig = " +
+        JSON.stringify(toyComponentCardConfig)
+    );
+
+    var idElements = ["toyComponent", idHelper.toString()];
+    var id = idElements.join(".");
+
+    var classArray = [];
+    classArray.push("toyComponent");
+    classArray.push(toyComponentCardConfig.class);
+    var node = cards.addCardFront(parent, classArray, id);
+
+    var gradient = `radial-gradient(#ffffff 70%, ${toyComponentCardConfig.color})`;
+
+    domStyle.set(node, {
+      background: gradient,
+    });
+
+    addToyComponentFields(node, toyComponentCardConfig);
+    return node;
   }
 
   // This returned object becomes the defined value of this module

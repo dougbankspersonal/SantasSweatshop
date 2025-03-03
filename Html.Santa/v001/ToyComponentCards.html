@@ -29,6 +29,10 @@
         packages: [
           { name: "dojo", location: "../../bower_components/dojo" },
           { name: "javascript", location: "javascript" },
+          {
+            name: "sharedJavascript",
+            location: "SharedWebBoardgame/javascript",
+          },
         ],
       };
     </script>
@@ -36,262 +40,64 @@
     <script src="../../../bower_components/dojo/dojo.js"></script>
 
     <script>
-           require([
-             "javascript/toyComponentCards",
-             "javascript/gameUtils",
-             "sharedJavascript/cards",
-             "sharedJavascript/debugLog",
-             "sharedJavascript/systemConfigs",
-       ], function (toyComponentCards, gameUtils, dojo, cards, debugLog, systemConfigs) {
-             var toyComponentCardConfigs = [
-               {
-                 title: "Doll",
-                 class: "doll",
-                 image: "../images/ToyComponents/doll.png",
-                 craft: {
-                   number: 3,
-                   points: 2,
-                 },
-                 floor: -2,
-                 playType: "normal",
-                 color: "#9B111E",
-               },
-               {
-                 title: "Kite",
-                 class: "kite",
-                 image: "../images/ToyComponents/kite.png",
-                 craft: {
-                   number: 3,
-                   points: 3,
-                 },
-                 floor: -3,
-                 playType: "normal",
-                 color: "#9B111E",
-               },
-               {
-                 title: "Robot",
-                 class: "robot",
-                 image: "../images/ToyComponents/robot.png",
-                 craft: {
-                   number: 3,
-                   points: 4,
-                 },
-                 floor: -4,
-                 playType: "normal",
-                 color: "#9B111E",
-               },
-               {
-                 title: "Radio",
-                 class: "radio",
-                 image: "../images/ToyComponents/radio.png",
-                 craft: {
-                   number: 4,
-                   points: 10,
-                 },
-                 floor: -6,
-                 playType: "challenge",
-                 color: "#228b22",
-               },
-               /*     {
-                         title: "Matryoshka",
-                         class: "matryoshka",
-      				image: "../images/ToyComponents/matryoshka.png",
-                         craft: {
-      					number: 4,
-      					plus: true,
-      					pointsPerCard: 2,
-      				},
-      				floor: -6,
-      				playType: "challenge",
-      				color: "#228b22",
-                     },
-      		*/
-               {
-                 title: "Reindeer Poop",
-                 class: "poop",
-                 image: "../images/ToyComponents/poop.png",
-                 special: "No Crafting",
-                 floor: -7,
-                 playType: "special",
-                 color: "#593002",
-               },
-               {
-                 title: "Wrapping Paper",
-                 class: "wrappingPaper",
-                 image: "../images/ToyComponents/wrappingPaper.png",
-                 special: "x2",
-                 floor: -2,
-                 playType: "special",
-                 color: "#FFD700",
-               },
-               {
-                 title: "Elf Magic",
-                 class: "elfMagic",
-                 image: "../images/ToyComponents/elfMagic.png",
-                 specialImages: [
-                   "../images/ToyComponents/doll.png",
-                   "../images/ToyComponents/kite.png",
-                   "../images/ToyComponents/robot.png",
-                 ],
-                 specialImagesSeparator: "/",
-                 floor: -2,
-                 playType: "special",
-                 color: "#FFD700",
-               },
-               {
-                 title: "Broom",
-                 class: "broom",
-                 image: "../images/ToyComponents/broom.png",
-                 specialImages: [
-                   "../images/ToyComponents/floor.png",
-                   "../images/ToyComponents/rightArrow.png",
-                   "../images/ToyComponents/floor.png",
-                 ],
-                 floor: -2,
-                 playType: "special",
-                 color: "#FFD700",
-               },
-               /*
-                     {
-                         title: "Gloves",
-                         class: "gloves",
-      				image: "../images/ToyComponents/gloves.png",
-      				specialImages: [
-      					"../images/ToyComponents/floor.png",
-      					"../images/ToyComponents/rightArrow.png",
-      					"../images/ToyComponents/workbench.png",
-      				],
-      				floor: -10,
-      				playType: "special",
-      				color: "#FFD700",
-                     },
-                     {
-                         title: "Fruitcake",
-                         class: "fruitcake",
-      				image: "../images/ToyComponents/fruitcake.png",
-      				specialImages: [
-      					"../images/ToyComponents/fruitcake.png",
-      					"../images/ToyComponents/doubleArrow.png",
-      					"card",
-      				],
-      				floor: -10,
-      				playType: "special",
-      				color: "#FFD700",
-                     },*/
-             ];
-             function _addToyComponentCard(parent, index) {
-               var toyComponentCardConfig = cards.getCardConfigFromIndex(
-                 toyComponentCardConfigs,
-                 index
-               );
-               debugLog.debugLog(
-                 "Cards",
-                 "Doug: _addToyComponentCard: index = " + index
-               );
-               debugLog.debugLog(
-                 "Cards",
-                 "Doug: _addToyComponentCard: toyComponentCardConfigs = " +
-                   JSON.stringify(toyComponentCardConfigs)
-               );
+      require([
+        "javascript/toyComponentCards",
+        "javascript/gameUtils",
+        "sharedJavascript/cards",
+        "sharedJavascript/debugLog",
+        "sharedJavascript/systemConfigs",
+      ], function (
+        toyComponentCards,
+        gameUtils,
+        dojo,
+        cards,
+        debugLog,
+        systemConfigs
+      ) {
+        // See gameUtils.setConfigs for more details on configs.
+        // This is the TTS config.
+        var ttsConfigs = {
+          ttsCards: true,
+        };
+        var nonTTSConfigs = {
+          ttsCards: false,
+        };
+        systemConfigs.setSystemConfigs(nonTTSConfigs);
 
-               return toyComponentCards.addToyComponentCard(
-                 parent,
-                 toyComponentCardConfig,
-                 index
-               );
-             }
+        var configs = gameUtils.getConfigs();
 
-             function _addBack(parent, title, color) {
-               return toyComponentCards.addBack(parent, title, color);
-             }
+        for (var i = 0; i < toyComponentCardConfigs.length; i++) {
+          debugLog.debugLog("Cards", "Doug: i = " + i);
+          var instanceCount;
+          if (configs.singleCardInstance) {
+            instanceCount = cards.getInstanceCountFromConfig(
+              toyComponentCardConfigs,
+              i
+            );
+          } else {
+            instanceCount = toyComponentCards.calculatePlayerBasedInstanceCount(
+              toyComponentCardConfigs[i]
+            );
+          }
+          toyComponentCardConfigs[i].instanceCount = instanceCount;
+        }
 
-      			  // Configs:
-       // At the very start call setConfigs, pass in various tweakables.
-       //
-       // Here's what to use for different needs:
-       //
-       // For any tts, or an array of cards, add:
-       /*
-      configs.skipPadding = true
-      configs.cardsPerPage = cards.ttsCardsPerPage
-      configs.skipBacks = true
-      configs.pageOfItemsIsInlineBlock = true
-      configs.singleCardInstance = true
-      */
-       // tts big cards add
-       /*
-      configs.bigCards = true
-      configs.pageWidth = gameUtils.ttsBigCardPageWidth
-      */
-       // tts small cards add
-       /*
-      configs.pageWidth = gameUtils.ttsCardPageWidth
-      */
-       // tts die add
-       /*
-      configs.pageWidth = gameUtils.dieColulmnsAcross * gameUtils.dieWidth
-      */
-       // Array of cards add
-       /*
-      configs.bigCards = true
-      configs.pageWidth = gameUtils.nullPageWidth
-      */
+        debugLog.debugLog(
+          "Summary",
+          "Doug: toyComponentCardConfigs = " +
+            JSON.stringify(toyComponentCardConfigs)
+        );
 
-      CLEANUP: see aboce, doc on what old configs meant.  Move to new.target
+        var numCards = cards.getNumCardsFromConfigs(toyComponentCardConfigs);
+        debugLog.debugLog("Summary", "Doug: numCards = " + numCards);
 
-             // See gameUtils.setConfigs for more details on configs.
-             // This is the TTS config.
-             var ttsConfigs = {
-               skipPadding: true,
-               cardsPerPage: cards.ttsCardsPerPage,
-               skipBacks: true,
-               pageOfItemsIsInlineBlock: true,
-               singleCardInstance: true,
-               bigCards: true,
-               pageWidth: gameUtils.ttsBigCardPageWidth,
-               addBackOverride: _addBack,
-             };
-             var nonTTSConfigs = {
-               cardsPerPage: cards.bigCardsPerPage,
-               bigCards: true,
-               addBackOverride: _addBack,
-             };
-             systemConfigs.setSystemConfigs(nonTTSConfigs);
-
-             var configs = gameUtils.getConfigs();
-
-             for (var i = 0; i < toyComponentCardConfigs.length; i++) {
-               debugLog.debugLog("Cards", "Doug: i = " + i);
-               var instanceCount;
-               if (configs.singleCardInstance) {
-                 instanceCount = cards.getInstanceCountFromConfig(
-                   toyComponentCardConfigs,
-                   i
-                 );
-               } else {
-                 instanceCount = toyComponentCards.calculatePlayerBasedInstanceCount(
-                   toyComponentCardConfigs[i]
-                 );
-               }
-               toyComponentCardConfigs[i].instanceCount = instanceCount;
-             }
-
-             debugLog.debugLog(
-               "Summary",
-               "Doug: toyComponentCardConfigs = " +
-                 JSON.stringify(toyComponentCardConfigs)
-             );
-
-             var numCards = cards.getNumCardsFromConfigs(toyComponentCardConfigs);
-             debugLog.debugLog("Summary", "Doug: numCards = " + numCards);
-
-             cards.addCards(
-               "Santa's Sweatshop",
-               "#228b22",
-               numCards,
-               _addToyComponentCard
-             );
-           });
+        cards.addCards(
+          "Santa's Sweatshop",
+          "#228b22",
+          numCards,
+          touComponentCards.addToyComponentCard
+        );
+      });
     </script>
   </body>
 </html>

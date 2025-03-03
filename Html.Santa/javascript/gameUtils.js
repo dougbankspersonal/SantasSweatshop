@@ -3,75 +3,86 @@ define([
   "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/query",
+  "javascript/rowTypes",
+  "javascript/versionDetails",
   "sharedJavascript/debugLog",
+  "sharedJavascript/systemConfigs",
   "dojo/domReady!",
-], function (dom, domConstruct, domStyle, query, debugLog) {
+], function (
+  dom,
+  domConstruct,
+  domStyle,
+  query,
+  rowTypes,
+  versionDetails,
+  debugLog,
+  systemConfigs
+) {
   var pixelsPerInch = 300;
   var pageNumber = 0;
   var cardNumber = 0;
 
-  var sideBarWidth = 360;
+  var pageOfItemsContentsPaddingPx = 10;
+
+  var sidebarWidth = 360;
   var standardBorderWidth = 2;
 
-  // Slots, elements, cross tiles.
+  // Slots, elements, tiles.
   var slotWidth = 180;
 
-  var standardRowHeight = 180;
-  var boxesRowHeight = standardRowHeight * 0.5;
   var elementHeight = slotWidth - 20;
   var elementWidth = elementHeight;
 
-  var crossTileOnBoardLeftMargin = 20;
-  var crossTileOnBoardTopMargin = 10;
+  var conveyorTileOnBoardLeftMargin = 20;
+  var conveyorTileOnBoardTopMargin = 10;
 
   var dieWidth = 150;
   var dieHeight = dieWidth;
   var dieColulmnsAcross = 3;
 
-  // For a cross tile, it lays across two side by side slots:
+  // For a tile, it lays across two side by side slots:
   //
   // Slots: +------a------+------a------+
   // Tile : +-c-+---------b---------+-c-+
-  // Where a is slotWidth, b is crossTileWidth, and c is crossTileOnBoardLeftMargin.
+  // Where a is slotWidth, b is conveyorTileWidth, and c is conveyorTileOnBoardLeftMargin.
   // So...
-  var crossTileWidth = 2 * (slotWidth - crossTileOnBoardLeftMargin);
-  var crossTileHeight = standardRowHeight - 2 * crossTileOnBoardTopMargin;
+  var conveyorTileWidth = 2 * (slotWidth - conveyorTileOnBoardLeftMargin);
+  var conveyorTileHeight =
+    rowTypes.standardRowHeight - 2 * conveyorTileOnBoardTopMargin;
 
   // So we have this:
   // +------a------+------a------+
   // +-c-+---------b---------+-c-+
-  // where b is the width of a cross tile, and c is crossTileOnBoardLeftMargin.
+  // where b is the width of a tile, and c is conveyorTileOnBoardLeftMargin.
   // There's also a margin:
-  var crossTileBorder = 2;
+  var conveyorTileBorder = 2;
 
-  // Border on both sides: the space inside the cross tile is actually this big:
-  var crossTileInnerWidth = crossTileWidth - 2 * crossTileBorder;
+  // Border on both sides: the space inside the tile is actually this big:
+  var conveyorTileInnerWidth = conveyorTileWidth - 2 * conveyorTileBorder;
 
-  // So if belt elements are children of the cross tile div, what is the position that'd
+  // So if belt elements are children of the tile div, what is the position that'd
   // put the belt in the center of a slot?
-  var beltCenterOffsetInTile =
-    slotWidth / 2 - crossTileOnBoardLeftMargin - crossTileBorder;
+  var beltCenterOffsetInConveyorTile =
+    slotWidth / 2 - conveyorTileOnBoardLeftMargin - conveyorTileBorder;
 
   var printedPagePortraitWidth = 816;
   var printedPagePortraitHeight = 1056;
   var printedPageLandscapeWidth = printedPagePortraitHeight;
   var printedPageLandscapeHeight = printedPagePortraitWidth;
-  var pageWidthPadding = 10;
-  var pageHeightPadding = 20;
+  var pagePadding = 10;
 
   // Cards.
-  var cardWidth = slotWidth - 20;
-  var cardHeight = Math.floor(1.4 * cardWidth);
-  var cardBackFontSize = Math.floor(cardWidth * 0.2);
+  var smallCardWidth = slotWidth - 20;
+  var smallCardHeight = 1.4 * smallCardWidth;
+  var smallCardBackFontSize = smallCardWidth * 0.2;
   var cardBorderWidth = 5;
 
-  var bigCardWidth = Math.floor(1.4 * cardWidth);
-  var bigCardHeight = Math.floor(1.4 * cardHeight);
-  var bigCardBackFontSize = Math.floor(bigCardWidth * 0.2);
+  var cardWidth = 1.4 * smallCardWidth;
+  var cardHeight = 1.4 * smallCardHeight;
+  var cardBackFontSize = cardWidth * 0.2;
 
+  var ttsSmallCardPageWidth = 10 * smallCardWidth;
   var ttsCardPageWidth = 10 * cardWidth;
-  var ttsBigCardPageWidth = 10 * bigCardWidth;
-  var nullPageWidth = "nullPageWidth";
 
   var boxesRowMarginTop = 5;
 
@@ -87,9 +98,9 @@ define([
     nutTypePistachio,
   ];
 
-  var starImage = "images/Markers/Simple.Star.png";
-  var salterImage = "images/Markers/Simple.Salter.png";
-  var squirrelImage = "images/Markers/Simple.Squirrel.png";
+  var starImage = "images/Markers/Star.png";
+  var salterImage = "images/Markers/Salter.png";
+  var squirrelImage = "images/Markers/Squirrel.png";
 
   var saltedTypes = ["Salted", "Unsalted"];
 
@@ -107,6 +118,7 @@ define([
   var wildImage = "images/Order/Order.Wild.png";
 
   function addDiv(parent, classArray, id, opt_innerHTML = "") {
+    console.assert(parent, "parent is null");
     var classes = classArray.join(" ");
     var node = domConstruct.create(
       "div",
@@ -131,7 +143,19 @@ define([
   }
 
   function extendOptClassArray(opt_classArray, newClassOrClasses) {
+    debugLog.debugLog(
+      "ScoringTrack",
+      "extendOptClassArray: opt_classArray == " + opt_classArray
+    );
+    debugLog.debugLog(
+      "ScoringTrack",
+      "extendOptClassArray: newClassOrClasses == " + newClassOrClasses
+    );
     var classArray = opt_classArray ? opt_classArray : [];
+    console.assert(
+      typeof classArray === "object",
+      "classArray is not an object"
+    );
     if (isString(newClassOrClasses)) {
       classArray.push(newClassOrClasses);
       return classArray;
@@ -163,10 +187,11 @@ define([
     return elementNodes[0];
   }
 
-  function addImage(parent, opt_classArray, id, opt_image) {
-    var classArray = opt_classArray ? opt_classArray : [];
+  function addImage(parent, classArray, id, opt_image) {
+    console.assert(classArray != null, "classArray is null");
+    console.assert(parent, "parent is null");
     if (!opt_image) {
-      classArray.unshift("pseudoImage");
+      classArray.unshift("pseudo_image");
     }
     var classes = classArray.join(" ");
     var props = {
@@ -185,34 +210,71 @@ define([
   }
 
   function getPageWidth(configs) {
-    if (configs.pageWidth) {
-      return configs.pageWidth;
-    } else if (configs.nullPageWidth) {
-      return null;
-    } else {
-      return printedPagePortraitWidth;
+    if (configs.demoBoard) {
+      var demoBoardWidth =
+        sidebarWidth +
+        versionDetails.getTotalNumColumns() * slotWidth +
+        2 * standardBorderWidth;
+      return demoBoardWidth;
     }
+    if (configs.landscape) {
+      return printedPageLandscapeWidth;
+    }
+
+    if (configs.ttsCards) {
+      if (configs.smallCards) {
+        return ttsSmallCardPageWidth;
+      } else {
+        return ttsCardPageWidth;
+      }
+    }
+
+    if (configs.ttsDie) {
+      return dieColulmnsAcross * dieWidth;
+    }
+
+    return printedPagePortraitWidth;
   }
 
   var getPageHeight = function () {
-    if (configs.landscape) {
+    var sc = systemConfigs.getSystemConfigs();
+    if (sc.landscape) {
       return printedPageLandscapeHeight;
+    }
+    if (sc.demoBoard) {
+      var orderedRowTypes = versionDetails.getOrderedRowTypes();
+      var numRows = orderedRowTypes.length;
+      var lastRowType = orderedRowTypes[numRows - 1];
+      if (lastRowType == rowTypes.RowTypes.Boxes) {
+        var numNonOrderRows = numRows - 1;
+        return (
+          2 * standardBorderWidth +
+          numNonOrderRows * rowTypes.standardRowHeight +
+          boxesRowMarginTop +
+          cardBorderWidth +
+          smallCardHeight +
+          cardBorderWidth
+        );
+      } else {
+        return numRows * rowTypes.standardRowHeight;
+      }
     }
     return null;
   };
 
   function addPageOfItems(parent, opt_classArray) {
+    var sc = systemConfigs.getSystemConfigs();
+    console.assert(parent, "parent is null");
     var classArray = extendOptClassArray(opt_classArray, "pageOfItems");
     var pageId = "pageOfItems_".concat(pageNumber.toString());
     pageNumber++;
 
-    var configs = getConfigs();
+    if (sc.demoBoard) {
+      classArray.push("demoBoard");
+    }
+
     var pageOfItems = addDiv(parent, classArray, pageId);
-    debugLog.debugLog(
-      "Cards",
-      `addPageOfItems configs = ${JSON.stringify(configs)}`
-    );
-    if (configs.pageOfItemsIsInlineBlock) {
+    if (sc.ttsCards || sc.ttsDie) {
       domStyle.set(pageOfItems, {
         display: "inline-block",
       });
@@ -224,10 +286,10 @@ define([
       "pageOfItemsContents"
     );
 
-    var pageWidth = getPageWidth(configs);
-    var pagehHeight = getPageHeight(configs);
+    var width = getPageWidth(sc);
+    var height = getPageHeight(sc);
 
-    if (configs.skipPadding) {
+    if (sc.ttsCards || sc.ttsDie) {
       domStyle.set(pageOfItemsContents, {
         position: "relative",
         top: "0px",
@@ -237,43 +299,41 @@ define([
       });
     } else {
       domStyle.set(pageOfItemsContents, {
-        "padding-left": pageWidthPadding + "px",
-        "padding-right": pageWidthPadding + "px",
-        "padding-top": pageHeightPadding + "px",
-        "padding-bottom": pageHeightPadding + "px",
+        padding: pageOfItemsContentsPaddingPx + "px",
       });
     }
 
-    if (configs.pageWidth == nullPageWidth) {
-      domStyle.set(pageOfItemsContents, {
-        "white-space": "nowrap",
-      });
-    }
+    domStyle.set(pageOfItemsContents, {
+      width: width + "px",
+    });
 
-    if (pageWidth !== null) {
+    if (height !== null) {
       domStyle.set(pageOfItemsContents, {
-        width: pageWidth + "px",
-      });
-    }
-
-    if (pagehHeight !== null) {
-      domStyle.set(pageOfItemsContents, {
-        height: pagehHeight + "px",
+        height: height + "px",
       });
     }
     return pageOfItemsContents;
   }
 
   function addRow(parent, opt_classArray, rowIndex) {
+    var sc = systemConfigs.getSystemConfigs();
+    console.assert(parent, "parent is null");
     var classArray = extendOptClassArray(opt_classArray, "row");
+    if (sc.demoBoard) {
+      classArray.push("demoBoard");
+    }
     var rowId = getRowId(rowIndex);
     var row = addDiv(parent, classArray, rowId);
-    addStandardBorder(row);
     return row;
   }
 
   function addCard(parent, opt_classArray, opt_id) {
+    var sc = systemConfigs.getSystemConfigs();
+    console.assert(parent, "parent is null");
     var classArray = extendOptClassArray(opt_classArray, "card");
+    if (sc.demoBoard) {
+      classArray.push("demoBoard");
+    }
     var cardId;
     if (opt_id) {
       cardId = opt_id;
@@ -282,7 +342,7 @@ define([
       cardNumber++;
     }
     var node = addDiv(parent, classArray, cardId);
-    if (configs.skipPadding) {
+    if (sc.ttsCards) {
       domStyle.set(node, {
         "margin-bottom": "0px",
         "margin-right": "0px",
@@ -359,13 +419,23 @@ define([
   var beltZIndex = 2;
   var elementZIndex = beltZIndex + 1;
   var markerZIndex = elementZIndex + 1;
-  var crossTileZIndex = markerZIndex + 1;
-  var arrowZIndex = crossTileZIndex + 1;
+  var conveyorTileZIndex = markerZIndex + 1;
+  var arrowZIndex = conveyorTileZIndex + 1;
 
   var beltSegmentsPerRow = 8;
-  var beltSegmentOffset = standardRowHeight / beltSegmentsPerRow;
+  var beltSegmentOffset = rowTypes.standardRowHeight / beltSegmentsPerRow;
   var beltSegmentHeight = beltSegmentOffset + 2;
   var beltSegmentWidth = 40;
+
+  function getIndexForFirstRowType(orderedRowTypes, thisRowType) {
+    for (var i = 0; i < orderedRowTypes.length; i++) {
+      var rowType = orderedRowTypes[i];
+      if (rowType == thisRowType) {
+        return i;
+      }
+    }
+    return null;
+  }
 
   function getSlot(rowIndex, columnIndex) {
     var slotId = getSlotId(rowIndex, columnIndex);
@@ -376,19 +446,17 @@ define([
   return {
     slotWidth: slotWidth,
     standardBorderWidth: standardBorderWidth,
-    beltCenterOffsetInTile: beltCenterOffsetInTile,
-    standardRowHeight: standardRowHeight,
-    boxesRowHeight: boxesRowHeight,
+    beltCenterOffsetInConveyorTile: beltCenterOffsetInConveyorTile,
     elementHeight: elementHeight,
     elementWidth: elementWidth,
     arrowWidth: elementWidth / 2,
     arrowHeight: elementHeight / 2,
-    elementTopAndBottomMargin: (standardRowHeight - elementHeight) / 2,
+    elementTopAndBottomMargin: (rowTypes.standardRowHeight - elementHeight) / 2,
     elementLeftAndRightMargin: (slotWidth - elementWidth) / 2,
-    crossTileWidth: crossTileWidth,
-    crossTileHeight: crossTileHeight,
-    crossTileBorder: crossTileBorder,
-    crossTileInnerWidth: crossTileInnerWidth,
+    conveyorTileWidth: conveyorTileWidth,
+    conveyorTileHeight: conveyorTileHeight,
+    conveyorTileBorder: conveyorTileBorder,
+    conveyorTileInnerWidth: conveyorTileInnerWidth,
     beltSegmentZIndex: beltSegmentZIndex,
     beltSegmentsPerRow: beltSegmentsPerRow,
     beltSegmentOffset: beltSegmentOffset,
@@ -400,13 +468,13 @@ define([
     nutTypePeanut: nutTypePeanut,
     nutTypePistachio: nutTypePistachio,
 
+    smallCardHeight: smallCardHeight,
+    smallCardWidth: smallCardWidth,
+    smallCardBackFontSize: smallCardBackFontSize,
+
     cardHeight: cardHeight,
     cardWidth: cardWidth,
     cardBackFontSize: cardBackFontSize,
-
-    bigCardHeight: bigCardHeight,
-    bigCardWidth: bigCardWidth,
-    bigCardBackFontSize: bigCardBackFontSize,
 
     nutTypes: nutTypes,
     starImage: starImage,
@@ -427,25 +495,20 @@ define([
     elementZIndex: elementZIndex,
     markerZIndex: markerZIndex,
     arrowZIndex: arrowZIndex,
-    crossTileZIndex: crossTileZIndex,
+    conveyorTileZIndex: conveyorTileZIndex,
     beltZIndex: beltZIndex,
-    crossTileOnBoardLeftMargin: crossTileOnBoardLeftMargin,
-    crossTileOnBoardTopMargin: crossTileOnBoardTopMargin,
-    sideBarWidth: sideBarWidth,
+    conveyorTileOnBoardLeftMargin: conveyorTileOnBoardLeftMargin,
+    conveyorTileOnBoardTopMargin: conveyorTileOnBoardTopMargin,
+    sidebarWidth: sidebarWidth,
     printedPagePortraitWidth: printedPagePortraitWidth,
     printedPagePortraitHeight: printedPagePortraitHeight,
     printedPageLandscapeWidth: printedPageLandscapeWidth,
     printedPageLandscapeHeight: printedPageLandscapeHeight,
     dieWidth: dieWidth,
     dieHeight: dieHeight,
-    pageWidthPadding: pageWidthPadding,
-    pageHeightPadding: pageHeightPadding,
+    pagePadding: pagePadding,
     pixelsPerInch: pixelsPerInch,
-    ttsBigCardPageWidth: ttsBigCardPageWidth,
-    nullPageWidth: nullPageWidth,
-    ttsCardPageWidth: ttsCardPageWidth,
-    dieColulmnsAcross: dieColulmnsAcross,
-    dieWidth: dieWidth,
+    cardBorderWidth: cardBorderWidth,
 
     addDiv: addDiv,
     addImage: addImage,
@@ -454,8 +517,7 @@ define([
     addCard: addCard,
     blendHexColors: blendHexColors,
     getRandomInt: getRandomInt,
-    seededRandom: seededRandom,
-    addQuasiRandomTilt: addQuasiRandomTilt,
+    getIndexForFirstRowType: getIndexForFirstRowType,
     getSlot: getSlot,
     extendOptClassArray: extendOptClassArray,
     getSlotId: getSlotId,
@@ -463,5 +525,7 @@ define([
     getElementId: getElementId,
     getElementFromRow: getElementFromRow,
     addStandardBorder: addStandardBorder,
+    seededRandom: seededRandom,
+    addQuasiRandomTilt: addQuasiRandomTilt,
   };
 });
