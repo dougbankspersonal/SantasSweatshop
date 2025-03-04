@@ -5,13 +5,23 @@ define([
   "javascript/gameUtils",
   "sharedJavascript/cards",
   "sharedJavascript/debugLog",
+  "sharedJavascript/systemConfigs",
   "dojo/string",
   "dojo/dom-style",
   "dojo/domReady!",
-], function (gameInfo, gameUtils, cards, debugLog, string, domStyle) {
+], function (
+  gameInfo,
+  gameUtils,
+  cards,
+  debugLog,
+  systemConfigs,
+  string,
+  domStyle
+) {
   // Constants
   var minicardWidth = 30;
   var minicardHeight = minicardWidth * 1.4;
+  var specialImageSize = minicardHeight;
 
   var toyComponentCardConfigs = [
     {
@@ -244,11 +254,13 @@ define([
         } else {
           var image = gameUtils.addImage(
             imagesWrapper,
-            ["specialImage"],
+            ["special_image"],
             "specialImage"
           );
           domStyle.set(image, {
             backgroundImage: `url(${specialImage})`,
+            height: `${specialImageSize}px`,
+            width: `${specialImageSize}px`,
           });
         }
       }
@@ -270,33 +282,34 @@ define([
     }
   }
 
-  function addBack(parent, title, color) {
-    var configs = gameUtils.getConfigs();
-    var node = gameUtils.addCard(parent, ["back", "toyComponent"], "back");
+  function addToyComponentCardBack(parent, title, color) {
+    var backNode = gameUtils.addCard(parent, ["back", "toyComponent"], "back");
 
-    cards.setCardSize(node, configs);
+    cards.setCardSize(backNode);
 
-    var innerNode = gameUtils.addDiv(node, ["inset"], "inset");
+    var insetNode = gameUtils.addDiv(backNode, ["inset"], "inset");
     var gradient = string.substitute("radial-gradient(#ffffff 50%, ${color})", {
       color: color,
     });
-    domStyle.set(innerNode, "background", gradient);
+    domStyle.set(insetNode, "background", gradient);
 
-    gameUtils.addImage(innerNode, ["santa"], "santa");
+    gameUtils.addImage(insetNode, ["santa"], "santa");
 
     var title = gameUtils.addDiv(
-      innerNode,
+      insetNode,
       ["cardBackTitle"],
       "cardBackTitle",
       title
     );
     var style = {};
-    style["font-size"] = configs.bigCards
-      ? `${gameUtils.bigCardBackFontSize}px`
-      : `${gameUtils.cardBackFontSize}px`;
+    var sc = systemConfigs.getSystemConfigs();
+
+    style["font-size"] = sc.smallCards
+      ? `${gameUtils.cardBackFontSize}px`
+      : `${gameUtils.bigCardBackFontSize}px`;
     domStyle.set(title, style);
 
-    return node;
+    return backNode;
   }
 
   function calculatePlayerBasedInstanceCount(toyComponentCardConfig) {
@@ -321,15 +334,15 @@ define([
     return retVal;
   }
 
-  function _addToyComponentCard(parent, index) {
+  function addToyComponentCard(parent, index) {
     var toyComponentCardConfig = cards.getCardConfigFromIndex(
       toyComponentCardConfigs,
       index
     );
-    debugLog.debugLog("Cards", "Doug: _addToyComponentCard: index = " + index);
+    debugLog.debugLog("Cards", "Doug: addToyComponentCard: index = " + index);
     debugLog.debugLog(
       "Cards",
-      "Doug: _addToyComponentCard: toyComponentCardConfigs = " +
+      "Doug: addToyComponentCard: toyComponentCardConfigs = " +
         JSON.stringify(toyComponentCardConfigs)
     );
 
@@ -339,28 +352,45 @@ define([
         JSON.stringify(toyComponentCardConfig)
     );
 
-    var idElements = ["toyComponent", idHelper.toString()];
+    var idElements = ["toyComponent", index.toString()];
     var id = idElements.join(".");
 
     var classArray = [];
     classArray.push("toyComponent");
     classArray.push(toyComponentCardConfig.class);
-    var node = cards.addCardFront(parent, classArray, id);
+    var cardFrontNode = cards.addCardFront(parent, classArray, id);
 
     var gradient = `radial-gradient(#ffffff 70%, ${toyComponentCardConfig.color})`;
 
-    domStyle.set(node, {
+    domStyle.set(cardFrontNode, {
       background: gradient,
     });
 
-    addToyComponentFields(node, toyComponentCardConfig);
-    return node;
+    addToyComponentFields(cardFrontNode, toyComponentCardConfig);
+    return cardFrontNode;
   }
+
+  // Use code to figure out how many of each card we need.
+  for (toyComponentCardConfig of toyComponentCardConfigs) {
+    debugLog.debugLog(
+      "SantaCards",
+      "Doug: toyComponentCardConfig = " + JSON.stringify(toyComponentCardConfig)
+    );
+    toyComponentCardConfig.count = calculatePlayerBasedInstanceCount(
+      toyComponentCardConfig
+    );
+  }
+
+  console.log("Doug: getting numToyComponentCards");
+  var numToyComponentCards = cards.getNumCardsFromConfigs(
+    toyComponentCardConfigs
+  );
 
   // This returned object becomes the defined value of this module
   return {
+    numToyComponentCards: numToyComponentCards,
+
     addToyComponentCard: addToyComponentCard,
-    addBack: addBack,
-    calculatePlayerBasedInstanceCount: calculatePlayerBasedInstanceCount,
+    addToyComponentCardBack: addToyComponentCardBack,
   };
 });

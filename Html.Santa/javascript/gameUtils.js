@@ -3,7 +3,6 @@ define([
   "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/query",
-  "javascript/versionDetails",
   "sharedJavascript/debugLog",
   "sharedJavascript/genericMeasurements",
   "sharedJavascript/systemConfigs",
@@ -13,7 +12,6 @@ define([
   domConstruct,
   domStyle,
   query,
-  versionDetails,
   debugLog,
   genericMeasurements,
   systemConfigs
@@ -24,16 +22,6 @@ define([
 
   var pageOfItemsContentsPaddingPx = 10;
 
-  // Slots, elements, tiles.
-  var slotWidth = 180;
-
-  var elementHeight = slotWidth - 20;
-  var elementWidth = elementHeight;
-
-  var dieWidth = 150;
-  var dieHeight = dieWidth;
-  var dieColulmnsAcross = 3;
-
   var printedPagePortraitWidth = 816;
   var printedPagePortraitHeight = 1056;
   var printedPageLandscapeWidth = printedPagePortraitHeight;
@@ -41,7 +29,7 @@ define([
   var pagePadding = 10;
 
   // Cards.
-  var smallCardWidth = slotWidth - 20;
+  var smallCardWidth = 160;
   var smallCardHeight = 1.4 * smallCardWidth;
   var smallCardBackFontSize = smallCardWidth * 0.2;
   var cardBorderWidth = 5;
@@ -111,17 +99,6 @@ define([
   function getRowId(rowIndex) {
     var idPieces = ["row", rowIndex.toString()];
     return idPieces.join("_");
-  }
-
-  function getElementId(columnIndex) {
-    var elementId = "element_".concat(columnIndex.toString());
-    return elementId;
-  }
-
-  function getElementFromRow(rowNode, columnIndex) {
-    var elementId = getElementId(columnIndex);
-    var elementNodes = query(`#${elementId}`, rowNode);
-    return elementNodes[0];
   }
 
   function addImage(parent, classArray, id, opt_image) {
@@ -332,12 +309,6 @@ define([
 
   // This returned object becomes the defined value of this module
   return {
-    slotWidth: slotWidth,
-    elementHeight: elementHeight,
-    elementWidth: elementWidth,
-    arrowWidth: elementWidth / 2,
-    arrowHeight: elementHeight / 2,
-
     smallCardHeight: smallCardHeight,
     smallCardWidth: smallCardWidth,
     smallCardBackFontSize: smallCardBackFontSize,
@@ -346,30 +317,12 @@ define([
     cardWidth: cardWidth,
     cardBackFontSize: cardBackFontSize,
 
-    starImage: starImage,
-    salterImage: salterImage,
-    squirrelImage: squirrelImage,
-
-    saltedTypes: saltedTypes,
-    numSaltedTypes: saltedTypes.length,
-    saltedTypeImages: saltedTypeImages,
-
-    roastedTypes: roastedTypes,
-    numRoastedTypes: roastedTypes.length,
-    roastedTypeImages: roastedTypeImages,
-
-    wildImage: wildImage,
     boxesRowMarginTop: boxesRowMarginTop,
     cardSlotOutlineHeight: cardSlotOutlineHeight,
-    elementZIndex: elementZIndex,
-    markerZIndex: markerZIndex,
-    arrowZIndex: arrowZIndex,
     printedPagePortraitWidth: printedPagePortraitWidth,
     printedPagePortraitHeight: printedPagePortraitHeight,
     printedPageLandscapeWidth: printedPageLandscapeWidth,
     printedPageLandscapeHeight: printedPageLandscapeHeight,
-    dieWidth: dieWidth,
-    dieHeight: dieHeight,
     pagePadding: pagePadding,
     pixelsPerInch: pixelsPerInch,
     cardBorderWidth: cardBorderWidth,
@@ -386,8 +339,6 @@ define([
     extendOptClassArray: extendOptClassArray,
     getSlotId: getSlotId,
     getRowId: getRowId,
-    getElementId: getElementId,
-    getElementFromRow: getElementFromRow,
     addStandardBorder: addStandardBorder,
     seededRandom: seededRandom,
     addQuasiRandomTilt: addQuasiRandomTilt,

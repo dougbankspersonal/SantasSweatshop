@@ -49,11 +49,11 @@
       ], function (
         toyComponentCards,
         gameUtils,
-        dojo,
         cards,
         debugLog,
         systemConfigs
       ) {
+        console.log("Doug: 001");
         // See gameUtils.setConfigs for more details on configs.
         // This is the TTS config.
         var ttsConfigs = {
@@ -64,39 +64,16 @@
         };
         systemConfigs.setSystemConfigs(nonTTSConfigs);
 
-        var configs = gameUtils.getConfigs();
-
-        for (var i = 0; i < toyComponentCardConfigs.length; i++) {
-          debugLog.debugLog("Cards", "Doug: i = " + i);
-          var instanceCount;
-          if (configs.singleCardInstance) {
-            instanceCount = cards.getInstanceCountFromConfig(
-              toyComponentCardConfigs,
-              i
-            );
-          } else {
-            instanceCount = toyComponentCards.calculatePlayerBasedInstanceCount(
-              toyComponentCardConfigs[i]
-            );
-          }
-          toyComponentCardConfigs[i].instanceCount = instanceCount;
-        }
-
-        debugLog.debugLog(
-          "Summary",
-          "Doug: toyComponentCardConfigs = " +
-            JSON.stringify(toyComponentCardConfigs)
-        );
-
-        var numCards = cards.getNumCardsFromConfigs(toyComponentCardConfigs);
-        debugLog.debugLog("Summary", "Doug: numCards = " + numCards);
+        var sc = systemConfigs.getSystemConfigs();
 
         cards.addCards(
           "Santa's Sweatshop",
           "#228b22",
-          numCards,
-          touComponentCards.addToyComponentCard
+          toyComponentCards.numToyComponentCards,
+          toyComponentCards.addToyComponentCard,
+          toyComponentCards.addToyComponentCardBack
         );
+        console.log("Doug: 004");
       });
     </script>
   </body>
