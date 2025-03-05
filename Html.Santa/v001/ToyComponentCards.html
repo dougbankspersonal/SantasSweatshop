@@ -42,19 +42,12 @@
     <script>
       require([
         "javascript/toyComponentCards",
-        "javascript/gameUtils",
         "sharedJavascript/cards",
         "sharedJavascript/debugLog",
         "sharedJavascript/systemConfigs",
-      ], function (
-        toyComponentCards,
-        gameUtils,
-        cards,
-        debugLog,
-        systemConfigs
-      ) {
+      ], function (toyComponentCards, cards, debugLog, systemConfigs) {
         console.log("Doug: 001");
-        // See gameUtils.setConfigs for more details on configs.
+        // See systemConfigs.js for more details on configs.
         // This is the TTS config.
         var ttsConfigs = {
           ttsCards: true,
@@ -70,7 +63,7 @@
           "Santa's Sweatshop",
           "#228b22",
           toyComponentCards.numToyComponentCards,
-          toyComponentCards.addToyComponentCard,
+          toyComponentCards.addCardFrontAtIndex,
           toyComponentCards.addToyComponentCardBack
         );
         console.log("Doug: 004");

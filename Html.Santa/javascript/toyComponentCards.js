@@ -2,18 +2,20 @@
 
 define([
   "javascript/gameInfo",
-  "javascript/gameUtils",
   "sharedJavascript/cards",
   "sharedJavascript/debugLog",
+  "sharedJavascript/genericMeasurements",
+  "sharedJavascript/htmlUtils",
   "sharedJavascript/systemConfigs",
   "dojo/string",
   "dojo/dom-style",
   "dojo/domReady!",
 ], function (
   gameInfo,
-  gameUtils,
   cards,
   debugLog,
+  genericMeasurements,
+  htmlUtils,
   systemConfigs,
   string,
   domStyle
@@ -162,7 +164,7 @@ define([
 
   // Functions
   function makeMinicard(parent) {
-    var minicard = gameUtils.addDiv(parent, ["minicard"], "minicard");
+    var minicard = htmlUtils.addDiv(parent, ["minicard"], "minicard");
     domStyle.set(minicard, {
       height: `${minicardHeight}px`,
       width: `${minicardWidth}px`,
@@ -171,15 +173,15 @@ define([
   }
 
   function addToyComponentFields(parent, toyComponentCardConfig) {
-    var wrapper = gameUtils.addDiv(parent, ["wrapper"], "wrapper");
+    var wrapper = htmlUtils.addDiv(parent, ["wrapper"], "wrapper");
     if (toyComponentCardConfig.title) {
-      var imageNode = gameUtils.addDiv(wrapper, ["title"], "title");
+      var imageNode = htmlUtils.addDiv(wrapper, ["title"], "title");
       imageNode.innerHTML = toyComponentCardConfig.title;
     }
     if (toyComponentCardConfig.class) {
       for (var i = 0; i < 4; i++) {
         var indexClass = "index" + i;
-        var imageNode = gameUtils.addImage(
+        var imageNode = htmlUtils.addImage(
           parent,
           ["toyComponentImage", toyComponentCardConfig.class, indexClass],
           "toyComponentImage"
@@ -216,11 +218,11 @@ define([
       }
 
       var text = `${leftSide} = ${rightSide}`;
-      gameUtils.addDiv(wrapper, ["craftWrapper"], "craftWrapper", text);
+      htmlUtils.addDiv(wrapper, ["craftWrapper"], "craftWrapper", text);
     }
 
     if (toyComponentCardConfig.special) {
-      special = gameUtils.addDiv(
+      special = htmlUtils.addDiv(
         wrapper,
         ["special"],
         "special",
@@ -229,7 +231,7 @@ define([
     }
 
     if (toyComponentCardConfig.specialImages) {
-      var imagesWrapper = gameUtils.addDiv(
+      var imagesWrapper = htmlUtils.addDiv(
         wrapper,
         ["imagesWrapper"],
         "imagesWrapper"
@@ -241,7 +243,7 @@ define([
         var specialImage = toyComponentCardConfig.specialImages[i];
 
         if (separator && i > 0) {
-          gameUtils.addDiv(
+          htmlUtils.addDiv(
             imagesWrapper,
             ["specialImageSpacer"],
             "specialImageSpacer",
@@ -252,7 +254,7 @@ define([
         if (specialImage == "card") {
           makeMinicard(imagesWrapper);
         } else {
-          var image = gameUtils.addImage(
+          var image = htmlUtils.addImage(
             imagesWrapper,
             ["special_image"],
             "specialImage"
@@ -267,13 +269,13 @@ define([
     }
 
     if (toyComponentCardConfig.floor) {
-      var floorWrapper = gameUtils.addDiv(
+      var floorWrapper = htmlUtils.addDiv(
         wrapper,
         ["floorWrapper"],
         "floorWrapper"
       );
-      gameUtils.addImage(floorWrapper, ["floor"], "floor");
-      gameUtils.addDiv(
+      htmlUtils.addImage(floorWrapper, ["floor"], "floor");
+      htmlUtils.addDiv(
         floorWrapper,
         ["penalty"],
         "penalty",
@@ -283,19 +285,19 @@ define([
   }
 
   function addToyComponentCardBack(parent, title, color) {
-    var backNode = gameUtils.addCard(parent, ["back", "toyComponent"], "back");
+    var backNode = htmlUtils.addCard(parent, ["back", "toyComponent"], "back");
 
     cards.setCardSize(backNode);
 
-    var insetNode = gameUtils.addDiv(backNode, ["inset"], "inset");
+    var insetNode = htmlUtils.addDiv(backNode, ["inset"], "inset");
     var gradient = string.substitute("radial-gradient(#ffffff 50%, ${color})", {
       color: color,
     });
     domStyle.set(insetNode, "background", gradient);
 
-    gameUtils.addImage(insetNode, ["santa"], "santa");
+    htmlUtils.addImage(insetNode, ["santa"], "santa");
 
-    var title = gameUtils.addDiv(
+    var title = htmlUtils.addDiv(
       insetNode,
       ["cardBackTitle"],
       "cardBackTitle",
@@ -305,8 +307,8 @@ define([
     var sc = systemConfigs.getSystemConfigs();
 
     style["font-size"] = sc.smallCards
-      ? `${gameUtils.cardBackFontSize}px`
-      : `${gameUtils.bigCardBackFontSize}px`;
+      ? `${genericMeasurements.cardBackFontSize}px`
+      : `${genericMeasurements.bigCardBackFontSize}px`;
     domStyle.set(title, style);
 
     return backNode;
@@ -334,24 +336,11 @@ define([
     return retVal;
   }
 
-  function addToyComponentCard(parent, index) {
-    var toyComponentCardConfig = cards.getCardConfigFromIndex(
-      toyComponentCardConfigs,
-      index
-    );
-    debugLog.debugLog("Cards", "Doug: addToyComponentCard: index = " + index);
-    debugLog.debugLog(
-      "Cards",
-      "Doug: addToyComponentCard: toyComponentCardConfigs = " +
-        JSON.stringify(toyComponentCardConfigs)
-    );
-
-    debugLog.debugLog(
-      "Cards",
-      "Doug addToyComponentCard toyComponentCardConfig = " +
-        JSON.stringify(toyComponentCardConfig)
-    );
-
+  function addCardFrontUsingConfigAndIndex(
+    parent,
+    toyComponentCardConfig,
+    index
+  ) {
     var idElements = ["toyComponent", index.toString()];
     var id = idElements.join(".");
 
@@ -368,6 +357,27 @@ define([
 
     addToyComponentFields(cardFrontNode, toyComponentCardConfig);
     return cardFrontNode;
+  }
+
+  function addCardFrontAtIndex(parent, index) {
+    var toyComponentCardConfig = cards.getCardConfigFromIndex(
+      toyComponentCardConfigs,
+      index
+    );
+    debugLog.debugLog("Cards", "Doug: addCardFrontAtIndex: index = " + index);
+    debugLog.debugLog(
+      "Cards",
+      "Doug: addCardFrontAtIndex: toyComponentCardConfigs = " +
+        JSON.stringify(toyComponentCardConfigs)
+    );
+
+    debugLog.debugLog(
+      "Cards",
+      "Doug addCardFrontAtIndex toyComponentCardConfig = " +
+        JSON.stringify(toyComponentCardConfig)
+    );
+
+    addCardFrontUsingConfigAndIndex(parent, toyComponentCardConfig, index);
   }
 
   // Use code to figure out how many of each card we need.
@@ -390,7 +400,8 @@ define([
   return {
     numToyComponentCards: numToyComponentCards,
 
-    addToyComponentCard: addToyComponentCard,
+    addCardFrontUsingConfigAndIndex: addCardFrontUsingConfigAndIndex,
+    addCardFrontAtIndex: addCardFrontAtIndex,
     addToyComponentCardBack: addToyComponentCardBack,
   };
 });

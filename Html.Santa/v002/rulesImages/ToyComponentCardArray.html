@@ -29,6 +29,10 @@
         packages: [
           { name: "dojo", location: "../../bower_components/dojo" },
           { name: "javascript", location: "javascript" },
+          {
+            name: "sharedJavascript",
+            location: "SharedWebBoardgame/javascript",
+          },
         ],
       };
     </script>
@@ -38,18 +42,20 @@
     <script>
       require([
         "javascript/toyComponentCards",
-        "javascript/gameUtils",
         "sharedJavascript/cards",
         "sharedJavascript/debugLog",
+        "sharedJavascript/genericMeasurements",
         "sharedJavascript/htmlUtils",
+        "sharedJavascript/systemConfigs",
         "dojo/dom",
         "dojo/dom-style",
       ], function (
         toyComponentCards,
-        gameUtils,
         cards,
         debugLog,
+        genericMeasurements,
         htmlUtils,
+        systemConfigs,
         dom,
         domStyle,
         dojo
@@ -167,6 +173,12 @@
             title: "Kite",
           },
           {
+            title: "Robot",
+          },
+          {
+            title: "Wrapping Paper",
+          },
+          {
             title: "Reindeer Poop",
           },
           {
@@ -193,7 +205,7 @@
         var minTilt = -totalTilt / 2;
         var maxTilt = totalTilt / 2;
 
-        var cardSpacing = gameUtils.bigCardWidth * 0.5;
+        var cardSpacing = genericMeasurements.cardWidth * 0.5;
         function modifyCardLayout(card, i) {
           debugLog.debugLog("Cards", "Doug: modifyCardLayout: i = " + i);
           var left = i * cardSpacing;
@@ -202,19 +214,10 @@
             zIndex: `${100 - i}`,
             "margin-right": "-50px",
           });
-          gameUtils.addQuasiRandomTilt(card, minTilt, maxTilt);
+          htmlUtils.addQuasiRandomTilt(card, minTilt, maxTilt);
         }
 
-        var configs = {
-          skipPadding: true,
-          cardsPerPage: cards.ttsCardsPerPage,
-          skipBacks: true,
-          pageOfItemsIsInlineBlock: true,
-          singleCardInstance: true,
-          bigCards: true,
-          pageWidth: gameUtils.nullPageWidth,
-        };
-        gameUtils.setConfigs(configs);
+        systemConfigs.setSystemConfigs({});
 
         var bodyNode = dom.byId("body");
         var pageNode = htmlUtils.addPageOfItems(bodyNode);
@@ -241,7 +244,7 @@
             );
             console.assert(toyComponentCardConfig);
             toyComponentCardConfig.instanceCount = 1;
-            card = toyComponentCards.addToyComponentCard(
+            card = toyComponentCards.addCardFrontUsingConfigAndIndex(
               pageNode,
               toyComponentCardConfig,
               i
