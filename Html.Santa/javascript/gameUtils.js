@@ -123,8 +123,12 @@ define([
     return node;
   }
 
-  function getPageWidth(configs) {
-    if (configs.landscape) {
+  function getPageWidth() {
+    var sc = systemConfigs.getSystemConfigs();
+    if (sc.demoBoard || sc.ttsCards || sc.ttsDie) {
+      return null;
+    }
+    if (sc.landscape) {
       return printedPageLandscapeWidth;
     }
 
@@ -133,62 +137,60 @@ define([
 
   var getPageHeight = function () {
     var sc = systemConfigs.getSystemConfigs();
+    if (sc.demoBoard || sc.ttsCards || sc.ttsDie) {
+      return null;
+    }
     if (sc.landscape) {
       return printedPageLandscapeHeight;
     }
+
     return printedPagePortraitHeight;
   };
 
   function addPageOfItems(parent, opt_classArray) {
     var sc = systemConfigs.getSystemConfigs();
     console.assert(parent, "parent is null");
-    var classArray = extendOptClassArray(opt_classArray, "pageOfItems");
+    var classArray = extendOptClassArray(opt_classArray, "page_of_items");
     var pageId = "pageOfItems_".concat(pageNumber.toString());
     pageNumber++;
 
-    if (sc.demoBoard) {
-      classArray.push("demoBoard");
+    var pageOfItems = addDiv(parent, classArray, pageId);
+    var width = getPageWidth();
+    var height = getPageHeight();
+    if (width !== null) {
+      domStyle.set(pageOfItems, {
+        width: width + "px",
+      });
+    }
+    if (height !== null) {
+      domStyle.set(pageOfItems, {
+        height: height + "px",
+      });
     }
 
-    var pageOfItems = addDiv(parent, classArray, pageId);
-    if (sc.ttsCards || sc.ttsDie) {
+    if (!sc.ttsCards && !sc.ttsDie && !sc.demoBoard) {
       domStyle.set(pageOfItems, {
-        display: "inline-block",
+        padding: genericMeasurements.pageOfItemsPaddingPx + "px",
       });
+    }
+
+    var childClassArray = ["page_of_items_contents"];
+    if (sc.ttsCards) {
+      childClassArray.push("tts_cards");
+    } else if (sc.ttsDie) {
+      childClassArray.push("tts_die");
+    } else if (sc.demoBoard) {
+      childClassArray.push("demo_board");
+    } else {
+      childClassArray.push("non_tts");
     }
 
     var pageOfItemsContents = addDiv(
       pageOfItems,
-      ["pageOfItemsContents"],
+      childClassArray,
       "pageOfItemsContents"
     );
 
-    var width = getPageWidth(sc);
-    var height = getPageHeight(sc);
-
-    if (sc.ttsCards || sc.ttsDie) {
-      domStyle.set(pageOfItemsContents, {
-        position: "relative",
-        top: "0px",
-        left: "0px",
-        display: "inline-block",
-        "text-align": "left",
-      });
-    } else {
-      domStyle.set(pageOfItemsContents, {
-        padding: pageOfItemsContentsPaddingPx + "px",
-      });
-    }
-
-    domStyle.set(pageOfItemsContents, {
-      width: width + "px",
-    });
-
-    if (height !== null) {
-      domStyle.set(pageOfItemsContents, {
-        height: height + "px",
-      });
-    }
     return pageOfItemsContents;
   }
 
