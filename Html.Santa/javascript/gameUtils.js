@@ -22,12 +22,6 @@ define([
 
   var pageOfItemsContentsPaddingPx = 10;
 
-  var printedPagePortraitWidth = 816;
-  var printedPagePortraitHeight = 1056;
-  var printedPageLandscapeWidth = printedPagePortraitHeight;
-  var printedPageLandscapeHeight = printedPagePortraitWidth;
-  var pagePadding = 10;
-
   // Cards.
   var smallCardWidth = 160;
   var smallCardHeight = 1.4 * smallCardWidth;
@@ -123,77 +117,6 @@ define([
     return node;
   }
 
-  function getPageWidth() {
-    var sc = systemConfigs.getSystemConfigs();
-    if (sc.demoBoard || sc.ttsCards || sc.ttsDie) {
-      return null;
-    }
-    if (sc.landscape) {
-      return printedPageLandscapeWidth;
-    }
-
-    return printedPagePortraitWidth;
-  }
-
-  var getPageHeight = function () {
-    var sc = systemConfigs.getSystemConfigs();
-    if (sc.demoBoard || sc.ttsCards || sc.ttsDie) {
-      return null;
-    }
-    if (sc.landscape) {
-      return printedPageLandscapeHeight;
-    }
-
-    return printedPagePortraitHeight;
-  };
-
-  function addPageOfItems(parent, opt_classArray) {
-    var sc = systemConfigs.getSystemConfigs();
-    console.assert(parent, "parent is null");
-    var classArray = extendOptClassArray(opt_classArray, "page_of_items");
-    var pageId = "pageOfItems_".concat(pageNumber.toString());
-    pageNumber++;
-
-    var pageOfItems = addDiv(parent, classArray, pageId);
-    var width = getPageWidth();
-    var height = getPageHeight();
-    if (width !== null) {
-      domStyle.set(pageOfItems, {
-        width: width + "px",
-      });
-    }
-    if (height !== null) {
-      domStyle.set(pageOfItems, {
-        height: height + "px",
-      });
-    }
-
-    if (!sc.ttsCards && !sc.ttsDie && !sc.demoBoard) {
-      domStyle.set(pageOfItems, {
-        padding: genericMeasurements.pageOfItemsPaddingPx + "px",
-      });
-    }
-
-    var childClassArray = ["page_of_items_contents"];
-    if (sc.ttsCards) {
-      childClassArray.push("tts_cards");
-    } else if (sc.ttsDie) {
-      childClassArray.push("tts_die");
-    } else if (sc.demoBoard) {
-      childClassArray.push("demo_board");
-    } else {
-      childClassArray.push("non_tts");
-    }
-
-    var pageOfItemsContents = addDiv(
-      pageOfItems,
-      childClassArray,
-      "pageOfItemsContents"
-    );
-
-    return pageOfItemsContents;
-  }
-
   function addRow(parent, opt_classArray, rowIndex) {
     var sc = systemConfigs.getSystemConfigs();
     console.assert(parent, "parent is null");
@@ -269,20 +192,6 @@ define([
     return blendedHex;
   }
 
-  function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
-  }
-
-  function seededRandom(seed) {
-    let currentSeed = seed;
-
-    // Simple linear congruential generator (LCG)
-    return function () {
-      currentSeed = (currentSeed * 9301 + 49297) % 233280;
-      return currentSeed / 233280;
-    };
-  }
-
   const tiltRandom = seededRandom(234232443);
   function addQuasiRandomTilt(node, minTilt, maxTilt) {
     var zeroToOneRandom = tiltRandom();
@@ -293,16 +202,6 @@ define([
   }
 
   var cardSlotOutlineHeight = 4;
-
-  function getIndexForFirstRowType(orderedRowTypes, thisRowType) {
-    for (var i = 0; i < orderedRowTypes.length; i++) {
-      var rowType = orderedRowTypes[i];
-      if (rowType == thisRowType) {
-        return i;
-      }
-    }
-    return null;
-  }
 
   function getSlot(rowIndex, columnIndex) {
     var slotId = getSlotId(rowIndex, columnIndex);
@@ -321,28 +220,19 @@ define([
 
     boxesRowMarginTop: boxesRowMarginTop,
     cardSlotOutlineHeight: cardSlotOutlineHeight,
-    printedPagePortraitWidth: printedPagePortraitWidth,
-    printedPagePortraitHeight: printedPagePortraitHeight,
-    printedPageLandscapeWidth: printedPageLandscapeWidth,
-    printedPageLandscapeHeight: printedPageLandscapeHeight,
-    pagePadding: pagePadding,
     pixelsPerInch: pixelsPerInch,
     cardBorderWidth: cardBorderWidth,
 
     addDiv: addDiv,
     addImage: addImage,
-    addPageOfItems: addPageOfItems,
     addRow: addRow,
     addCard: addCard,
     blendHexColors: blendHexColors,
-    getRandomInt: getRandomInt,
-    getIndexForFirstRowType: getIndexForFirstRowType,
     getSlot: getSlot,
     extendOptClassArray: extendOptClassArray,
     getSlotId: getSlotId,
     getRowId: getRowId,
     addStandardBorder: addStandardBorder,
-    seededRandom: seededRandom,
     addQuasiRandomTilt: addQuasiRandomTilt,
   };
 });

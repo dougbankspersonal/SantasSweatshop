@@ -39,15 +39,17 @@
       require([
         "javascript/toyComponentCards",
         "javascript/gameUtils",
-        "sharedJavascript/debugLog",
         "sharedJavascript/cards",
+        "sharedJavascript/debugLog",
+        "sharedJavascript/htmlUtils",
         "dojo/dom",
         "dojo/dom-style",
       ], function (
         toyComponentCards,
         gameUtils,
-        debugLog,
         cards,
+        debugLog,
+        htmlUtils,
         dom,
         domStyle,
         dojo
@@ -215,7 +217,7 @@
         gameUtils.setConfigs(configs);
 
         var bodyNode = dom.byId("body");
-        var pageNode = gameUtils.addPageOfItems(bodyNode);
+        var pageNode = htmlUtils.addPageOfItems(bodyNode);
         domStyle.set(pageNode, {
           "margin-top": "10px",
           "margin-bottom": "10px",
