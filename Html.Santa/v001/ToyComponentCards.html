@@ -49,13 +49,10 @@
         console.log("Doug: 001");
         // See systemConfigs.js for more details on configs.
         // This is the TTS config.
-        var ttsConfigs = {
-          ttsCards: true,
-        };
-        var nonTTSConfigs = {
-          ttsCards: false,
-        };
-        systemConfigs.setSystemConfigs(nonTTSConfigs);
+        var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
+        ttsConfigs.singleInstanceEachCard = true;
+        var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
+        systemConfigs.setSystemConfigs(ttsConfigs);
 
         var sc = systemConfigs.getSystemConfigs();
 
