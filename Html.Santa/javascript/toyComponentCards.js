@@ -391,14 +391,21 @@ define([
     );
   }
 
-  console.log("Doug: getting numToyComponentCards");
-  var numToyComponentCards = cards.getNumCardsFromConfigs(
-    toyComponentCardConfigs
-  );
+  var _numToyComponentCards = 0;
+  function getNumToyComponentCards() {
+    console.log("Doug: getting numToyComponentCards");
+    // Wait until we're asked to calculate so system configs can be applied.
+    if (_numToyComponentCards === 0) {
+      _numToyComponentCards = cards.getNumCardsFromConfigs(
+        toyComponentCardConfigs
+      );
+    }
+    return _numToyComponentCards;
+  }
 
   // This returned object becomes the defined value of this module
   return {
-    numToyComponentCards: numToyComponentCards,
+    getNumToyComponentCards: getNumToyComponentCards,
 
     addCardFrontUsingConfigAndIndex: addCardFrontUsingConfigAndIndex,
     addCardFrontAtIndex: addCardFrontAtIndex,

@@ -46,24 +46,21 @@
         "sharedJavascript/debugLog",
         "sharedJavascript/systemConfigs",
       ], function (toyComponentCards, cards, debugLog, systemConfigs) {
-        console.log("Doug: 001");
         // See systemConfigs.js for more details on configs.
         // This is the TTS config.
         var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
-        ttsConfigs.singleInstanceEachCard = true;
+        ttsConfigs.singleCardInstance = true;
         var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
-        systemConfigs.setSystemConfigs(ttsConfigs);
 
-        var sc = systemConfigs.getSystemConfigs();
+        systemConfigs.setSystemConfigs(ttsConfigs);
 
         cards.addCards(
           "Santa's Sweatshop",
           "#228b22",
-          toyComponentCards.numToyComponentCards,
+          toyComponentCards.getNumToyComponentCards(),
           toyComponentCards.addCardFrontAtIndex,
           toyComponentCards.addToyComponentCardBack
         );
-        console.log("Doug: 004");
       });
     </script>
   </body>
