@@ -41,123 +41,27 @@
 
     <script>
       require([
-        "javascript/toyComponentCards",
+        "dojo/dom",
+        "dojo/dom-style",
         "sharedJavascript/cards",
         "sharedJavascript/debugLog",
         "sharedJavascript/genericMeasurements",
         "sharedJavascript/htmlUtils",
         "sharedJavascript/systemConfigs",
-        "dojo/dom",
-        "dojo/dom-style",
+        "javascript/toyComponentCards",
       ], function (
-        toyComponentCards,
+        dom,
+        domStyle,
         cards,
         debugLog,
         genericMeasurements,
         htmlUtils,
         systemConfigs,
-        dom,
-        domStyle,
-        dojo
+        toyComponentCards
       ) {
-        var ttsCards = true;
-        var skipBacks = true;
-
-        var toyComponentCardConfigs = [
-          {
-            title: "Doll",
-            class: "doll",
-            image: "../../images/ToyComponents/doll.png",
-            craft: {
-              number: 3,
-              points: 2,
-            },
-            floor: -2,
-            playType: "normal",
-            color: "#9B111E",
-          },
-          {
-            title: "Kite",
-            class: "kite",
-            image: "../../images/ToyComponents/kite.png",
-            craft: {
-              number: 3,
-              points: 3,
-            },
-            floor: -3,
-            playType: "normal",
-            color: "#9B111E",
-          },
-          {
-            title: "Robot",
-            class: "robot",
-            image: "../../images/ToyComponents/robot.png",
-            craft: {
-              number: 3,
-              points: 4,
-            },
-            floor: -4,
-            playType: "normal",
-            color: "#9B111E",
-          },
-          {
-            title: "Radio",
-            class: "radio",
-            image: "../../images/ToyComponents/radio.png",
-            craft: {
-              number: 4,
-              points: 10,
-            },
-            floor: -6,
-            playType: "challenge",
-            color: "#228b22",
-          },
-          {
-            title: "Reindeer Poop",
-            class: "poop",
-            image: "../../images/ToyComponents/poop.png",
-            special: "No Crafting",
-            floor: -7,
-            playType: "special",
-            color: "#593002",
-          },
-          {
-            title: "Wrapping Paper",
-            class: "wrappingPaper",
-            image: "../../images/ToyComponents/wrappingPaper.png",
-            special: "x2",
-            floor: -2,
-            playType: "special",
-            color: "#FFD700",
-          },
-          {
-            title: "Elf Magic",
-            class: "elfMagic",
-            image: "../../images/ToyComponents/elfMagic.png",
-            specialImages: [
-              "../../images/ToyComponents/doll.png",
-              "../../images/ToyComponents/kite.png",
-              "../../images/ToyComponents/robot.png",
-            ],
-            specialImagesSeparator: "/",
-            floor: -2,
-            playType: "special",
-            color: "#FFD700",
-          },
-          {
-            title: "Broom",
-            class: "broom",
-            image: "../../images/ToyComponents/broom.png",
-            specialImages: [
-              "../../images/ToyComponents/floor.png",
-              "../../images/ToyComponents/rightArrow.png",
-              "../../images/ToyComponents/floor.png",
-            ],
-            floor: -2,
-            playType: "special",
-            color: "#FFD700",
-          },
-        ];
+        systemConfigs.setSystemConfigs({
+          pageless: true,
+        });
 
         var cardInstanceArray = [
           {
@@ -191,16 +95,6 @@
           return toyComponentCards.addBack(parent, title, color, opt_configs);
         }
 
-        function getToyComponentCardConfig(title) {
-          for (var i = 0; i < toyComponentCardConfigs.length; i++) {
-            var toyComponentCardConfig = toyComponentCardConfigs[i];
-            if (toyComponentCardConfig.title == title) {
-              return toyComponentCardConfig;
-            }
-          }
-          return null;
-        }
-
         var totalTilt = 6;
         var minTilt = -totalTilt / 2;
         var maxTilt = totalTilt / 2;
@@ -216,8 +110,6 @@
           });
           htmlUtils.addQuasiRandomTilt(card, minTilt, maxTilt);
         }
-
-        systemConfigs.setSystemConfigs({});
 
         var bodyNode = dom.byId("body");
         var pageNode = htmlUtils.addPageOfItems(bodyNode);
@@ -239,9 +131,10 @@
               configs
             );
           } else {
-            var toyComponentCardConfig = getToyComponentCardConfig(
-              cardInstance.title
-            );
+            var toyComponentCardConfig =
+              toyComponentCards.getToyComponentCardConfigByTitle(
+                cardInstance.title
+              );
             console.assert(toyComponentCardConfig);
             toyComponentCardConfig.instanceCount = 1;
             card = toyComponentCards.addCardFrontUsingConfigAndIndex(

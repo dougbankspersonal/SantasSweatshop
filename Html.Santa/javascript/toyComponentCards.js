@@ -403,12 +403,24 @@ define([
     return _numToyComponentCards;
   }
 
+  function getToyComponentCardConfigByTitle(title) {
+    for (var i = 0; i < toyComponentCardConfigs.length; i++) {
+      var toyComponentCardConfig = toyComponentCardConfigs[i];
+      if (toyComponentCardConfig.title == title) {
+        return toyComponentCardConfig;
+      }
+    }
+    return null;
+  }
+
   // This returned object becomes the defined value of this module
   return {
     getNumToyComponentCards: getNumToyComponentCards,
-
     addCardFrontUsingConfigAndIndex: addCardFrontUsingConfigAndIndex,
     addCardFrontAtIndex: addCardFrontAtIndex,
     addToyComponentCardBack: addToyComponentCardBack,
+    getToyComponentCardConfigByTitle: getToyComponentCardConfigByTitle,
+
+    toyComponentCardConfigs: toyComponentCardConfigs,
   };
 });
