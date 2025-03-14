@@ -73,10 +73,6 @@
   transform: rotate(5deg);
 }
 
-.card.front.toyComponent .wrapper .craftWrapper .minicard.noMargin {
-  margin-left: 0px;
-}
-
 .card.front.toyComponent .wrapper .craftWrapper .points {
   font-size: 18px;
   font-weight: bold;
@@ -87,7 +83,7 @@
   flex-direction: row;
 }
 
-.card.front.toyComponent .wrapper .imagesWrapper .pseudoImage {
+.card.front.toyComponent .wrapper .imagesWrapper .pseudo_image {
   height: 50px;
   width: 50px;
 }
@@ -106,7 +102,6 @@
 .card.front.toyComponent .wrapper .floorWrapper .floor {
   height: 60px;
   width: 60px;
-  background-image: url("../images/ToyComponents/floor.png");
 }
 
 .card.back.toyComponent .inset {
@@ -127,5 +122,4 @@
 .card.back.toyComponent .inset .santa {
   height: 120px;
   width: 120px;
-  background-image: url("../images/ToyComponents/santa.png");
 }

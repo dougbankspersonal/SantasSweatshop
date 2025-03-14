@@ -26,10 +26,10 @@ define([
   var specialImageSize = minicardHeight;
 
   var toyComponentCardConfigs = [
+    /*
     {
       title: "Doll",
       class: "doll",
-      image: "../images/ToyComponents/doll.png",
       craft: {
         number: 3,
         points: 2,
@@ -41,7 +41,6 @@ define([
     {
       title: "Kite",
       class: "kite",
-      image: "../images/ToyComponents/kite.png",
       craft: {
         number: 3,
         points: 3,
@@ -53,7 +52,6 @@ define([
     {
       title: "Robot",
       class: "robot",
-      image: "../images/ToyComponents/robot.png",
       craft: {
         number: 3,
         points: 4,
@@ -65,7 +63,6 @@ define([
     {
       title: "Radio",
       class: "radio",
-      image: "../images/ToyComponents/radio.png",
       craft: {
         number: 4,
         points: 10,
@@ -74,10 +71,10 @@ define([
       playType: "challenge",
       color: "#228b22",
     },
+    */
     /*     {
                    title: "Matryoshka",
                    class: "matryoshka",
-        image: "../images/ToyComponents/matryoshka.png",
                    craft: {
           number: 4,
           plus: true,
@@ -88,35 +85,28 @@ define([
         color: "#228b22",
                },
     */
+    /*
     {
       title: "Reindeer Poop",
       class: "poop",
-      image: "../images/ToyComponents/poop.png",
       special: "No Crafting",
       floor: -7,
       playType: "special",
       color: "#593002",
     },
+    */
     {
       title: "Wrapping Paper",
       class: "wrappingPaper",
-      image: "../images/ToyComponents/wrappingPaper.png",
       special: "x2",
-      floor: -2,
       playType: "special",
       color: "#FFD700",
     },
     {
       title: "Elf Magic",
       class: "elfMagic",
-      image: "../images/ToyComponents/elfMagic.png",
-      specialImages: [
-        "../images/ToyComponents/doll.png",
-        "../images/ToyComponents/kite.png",
-        "../images/ToyComponents/robot.png",
-      ],
+      specialImageClasses: ["doll", "kite", "robot"],
       specialImagesSeparator: "/",
-      floor: -2,
       playType: "special",
       color: "#FFD700",
     },
@@ -124,12 +114,7 @@ define([
       title: "Broom",
       class: "broom",
       image: "../images/ToyComponents/broom.png",
-      specialImages: [
-        "../images/ToyComponents/floor.png",
-        "../images/ToyComponents/rightArrow.png",
-        "../images/ToyComponents/floor.png",
-      ],
-      floor: -2,
+      specialImageClasses: ["floor", "rightArrow", "floor"],
       playType: "special",
       color: "#FFD700",
     },
@@ -138,11 +123,7 @@ define([
                    title: "Gloves",
                    class: "gloves",
         image: "../images/ToyComponents/gloves.png",
-        specialImages: [
-          "../images/ToyComponents/floor.png",
-          "../images/ToyComponents/rightArrow.png",
-          "../images/ToyComponents/workbench.png",
-        ],
+      specialImageClasses: ["floor", "rightArrow", "workbench"],
         floor: -10,
         playType: "special",
         color: "#FFD700",
@@ -151,11 +132,7 @@ define([
                    title: "Fruitcake",
                    class: "fruitcake",
         image: "../images/ToyComponents/fruitcake.png",
-        specialImages: [
-          "../images/ToyComponents/fruitcake.png",
-          "../images/ToyComponents/doubleArrow.png",
-          "card",
-        ],
+      specialImageClasses: ["fruitcake", "doubleArrow", "card"],
         floor: -10,
         playType: "special",
         color: "#FFD700",
@@ -186,12 +163,6 @@ define([
           ["toyComponentImage", toyComponentCardConfig.class, indexClass],
           "toyComponentImage"
         );
-
-        if (toyComponentCardConfig.image) {
-          domStyle.set(imageNode, {
-            backgroundImage: `url(${toyComponentCardConfig.image})`,
-          });
-        }
       }
     }
 
@@ -230,7 +201,7 @@ define([
       );
     }
 
-    if (toyComponentCardConfig.specialImages) {
+    if (toyComponentCardConfig.specialImageClasses) {
       var imagesWrapper = htmlUtils.addDiv(
         wrapper,
         ["imagesWrapper"],
@@ -239,8 +210,12 @@ define([
       var separator = toyComponentCardConfig.specialImagesSeparator
         ? toyComponentCardConfig.specialImagesSeparator
         : "&nbsp;";
-      for (var i = 0; i < toyComponentCardConfig.specialImages.length; i++) {
-        var specialImage = toyComponentCardConfig.specialImages[i];
+      for (
+        var i = 0;
+        i < toyComponentCardConfig.specialImageClasses.length;
+        i++
+      ) {
+        var specialImageClass = toyComponentCardConfig.specialImageClasses[i];
 
         if (separator && i > 0) {
           htmlUtils.addDiv(
@@ -251,19 +226,14 @@ define([
           );
         }
 
-        if (specialImage == "card") {
+        if (specialImageClass == "card") {
           makeMinicard(imagesWrapper);
         } else {
           var image = htmlUtils.addImage(
             imagesWrapper,
-            ["special_image"],
+            ["special_image", specialImageClass],
             "specialImage"
           );
-          domStyle.set(image, {
-            backgroundImage: `url(${specialImage})`,
-            height: `${specialImageSize}px`,
-            width: `${specialImageSize}px`,
-          });
         }
       }
     }
