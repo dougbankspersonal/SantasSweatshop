@@ -29,7 +29,8 @@
 <Panel id="BottomButtonPanel" alignment="LowerCenter" rectAlignment="LowerCenter" height="300" width="2000">
     <TableLayout id="BottomButtonTableLayout" width="90" height="90" cellSpacing="20"  rectAlignment="LowerCenter" cellBackgroundColor="rgba(0, 0, 0, 0)">
         <Row id="BottomButtonRow1" class="ButtonTableRowClass">
-            <Cell><Button id="SetupButtonId" class="HostButton" onClick="setup">Setup Game</Button></Cell>
+            <Cell><Button id="SetupNewGameButtonId" class="HostButton" onClick="setupNewGame">Setup New Game</Button></Cell>
+            <Cell><Button id="IncrementSeasonIndexAndDealButtonId" class="HostButton" onClick="incrementSeasonIndexAndDeal">Deal Next Season</Button></Cell>
             <Cell><Button id="CleanupButtonId" visibility="Host" class="HostButton" onClick="cleanup" text="Cleanup Game"/></Cell>
             <Cell><Button id="ToggleBiddingOpenButtonId" visibility="Host" class="HostButton" onClick="toggleBiddingOpen" text="Open Bidding"/></Cell>
             <Cell><Button id="ToggleBidsViewPanelButtonId" visibility="Host" class="HostButton" onClick="toggleBidViewPanel" text="Toggle Bids"/></Cell>
