@@ -1,6 +1,7 @@
 .card.toyComponent {
   font-family: "Mountains of Christmas", serif;
-  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
+    1px 1px 0 #fff;
   font-weight: bold;
 }
 
@@ -30,7 +31,8 @@
 }
 
 .card.front.toyComponent .white_outline.pseudo_image {
-  filter: drop-shadow(-1px -1px 0 white) drop-shadow(1px -1px 0 white) drop-shadow(-1px 1px 0 white) drop-shadow(1px 1px 0 white);
+  filter: drop-shadow(-1px -1px 0 white) drop-shadow(1px -1px 0 white)
+    drop-shadow(-1px 1px 0 white) drop-shadow(1px 1px 0 white);
 }
 
 .card.front.toyComponent div.toyComponentImage.index0 {
@@ -116,7 +118,8 @@
 .card.back.toyComponent .inset .cardBackTitle {
   font-size: 40px;
   font-family: "Mountains of Christmas", serif;
-  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
+    1px 1px 0 #fff;
   font-weight: bold;
   white-space: wrap;
 }
@@ -125,5 +128,3 @@
   height: 120px;
   width: 120px;
 }
-
-/*# sourceMappingURL=toy_component.css.map */

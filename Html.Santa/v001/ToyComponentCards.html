@@ -50,11 +50,11 @@
         // See systemConfigs.js for more details on configs.
         // This is the TTS config.
         var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
-        //    ttsConfigs.singleCardInstance = true;
+        ttsConfigs.singleCardInstance = true;
         var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
         //  nonTTSConfigs.skipCardBacks = true;
 
-        systemConfigs.setSystemConfigs(nonTTSConfigs);
+        systemConfigs.setSystemConfigs(ttsConfigs);
 
         cards.addCards(
           "Santa's Sweatshop",

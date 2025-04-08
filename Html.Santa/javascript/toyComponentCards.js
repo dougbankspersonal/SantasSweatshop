@@ -24,9 +24,8 @@ define([
   var minicardWidth = 30;
   var minicardHeight = minicardWidth * 1.4;
   var specialImageSize = minicardHeight;
-
+  var whiteOutlineClass = "white_outline";
   var toyComponentCardConfigs = [
-    /*
     {
       title: "Doll",
       class: "doll",
@@ -36,7 +35,8 @@ define([
       },
       floor: -2,
       playType: "normal",
-      color: "#9B111E",
+      color: "#ddaaaa",
+      borderColor: "#884444",
     },
     {
       title: "Kite",
@@ -47,7 +47,8 @@ define([
       },
       floor: -3,
       playType: "normal",
-      color: "#9B111E",
+      color: "#ddaa88",
+      borderColor: "#884444",
     },
     {
       title: "Robot",
@@ -58,7 +59,8 @@ define([
       },
       floor: -4,
       playType: "normal",
-      color: "#9B111E",
+      color: "#ddddaa",
+      borderColor: "#884444",
     },
     {
       title: "Radio",
@@ -69,9 +71,9 @@ define([
       },
       floor: -6,
       playType: "challenge",
-      color: "#228b22",
+      color: "#aaaaaa",
+      borderColor: "#777777",
     },
-    */
     /*     {
                    title: "Matryoshka",
                    class: "matryoshka",
@@ -82,25 +84,25 @@ define([
         },
         floor: -6,
         playType: "challenge",
-        color: "#228b22",
+        borderColor:  "#228b22",
                },
     */
-    /*
     {
       title: "Reindeer Poop",
       class: "poop",
       special: "No Crafting",
       floor: -7,
       playType: "special",
-      color: "#593002",
+      color: "#886633",
+      borderColor: "#593002",
     },
-    */
     {
       title: "Wrapping Paper",
       class: "wrappingPaper",
       special: "x2",
       playType: "special",
-      color: "#FFD700",
+      color: "#aaddaa",
+      borderColor: "#444488",
     },
     {
       title: "Elf Magic",
@@ -108,7 +110,8 @@ define([
       specialImageClasses: ["doll", "kite", "robot"],
       specialImagesSeparator: "/",
       playType: "special",
-      color: "#FFD700",
+      color: "#aaaadd",
+      borderColor: "#444488",
     },
     {
       title: "Broom",
@@ -116,7 +119,8 @@ define([
       image: "../images/ToyComponents/broom.png",
       specialImageClasses: ["floor", "rightArrow", "floor"],
       playType: "special",
-      color: "#FFD700",
+      color: "#dd88dd",
+      borderColor: "#444488",
     },
     /*
                {
@@ -126,7 +130,7 @@ define([
       specialImageClasses: ["floor", "rightArrow", "workbench"],
         floor: -10,
         playType: "special",
-        color: "#FFD700",
+        borderColor:  "#FFD700",
                },
                {
                    title: "Fruitcake",
@@ -135,7 +139,7 @@ define([
       specialImageClasses: ["fruitcake", "doubleArrow", "card"],
         floor: -10,
         playType: "special",
-        color: "#FFD700",
+        borderColor:  "#FFD700",
                },*/
   ];
 
@@ -160,7 +164,12 @@ define([
         var indexClass = "index" + i;
         var imageNode = htmlUtils.addImage(
           parent,
-          ["toyComponentImage", toyComponentCardConfig.class, indexClass],
+          [
+            whiteOutlineClass,
+            "toyComponentImage",
+            toyComponentCardConfig.class,
+            indexClass,
+          ],
           "toyComponentImage"
         );
       }
@@ -231,7 +240,7 @@ define([
         } else {
           var image = htmlUtils.addImage(
             imagesWrapper,
-            ["special_image", specialImageClass],
+            [whiteOutlineClass, "special_image", specialImageClass],
             "specialImage"
           );
         }
@@ -244,7 +253,7 @@ define([
         ["floorWrapper"],
         "floorWrapper"
       );
-      htmlUtils.addImage(floorWrapper, ["floor"], "floor");
+      htmlUtils.addImage(floorWrapper, ["floor", whiteOutlineClass], "floor");
       htmlUtils.addDiv(
         floorWrapper,
         ["penalty"],
@@ -319,10 +328,11 @@ define([
     classArray.push(toyComponentCardConfig.class);
     var cardFrontNode = cards.addCardFront(parent, classArray, id);
 
-    var gradient = `radial-gradient(#ffffff 70%, ${toyComponentCardConfig.color})`;
+    var gradient = `radial-gradient(${toyComponentCardConfig.color} 30%, #ffffff)`;
 
     domStyle.set(cardFrontNode, {
       background: gradient,
+      "border-color": toyComponentCardConfig.borderColor,
     });
 
     addToyComponentFields(cardFrontNode, toyComponentCardConfig);

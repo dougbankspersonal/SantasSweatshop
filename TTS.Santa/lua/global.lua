@@ -19,10 +19,11 @@ local activeDebugTags = {
     ButtonConfiguration = false,
     Cleanup = false,
     DealingASeason = false,
-    DemoSetup = true,
+    DemoSetup = false,
+    GameDeckCreation = true,
     GameDeckPlacement = false,
     PanelVisibility = false,
-    SourceDeckCreation = false,
+    SourceDeckCreation = true,
     StateMachine = false,
     StateTransitions = false,
     Timing = false,
@@ -73,15 +74,15 @@ local orderedCardTypes = {
     cardTypes.radio,
     cardTypes.poop,
     cardTypes.wrapping,
-    cardTypes.broom,
     cardTypes.magic,
+    cardTypes.broom,
 }
 
 --[[
 Twiddles for alternate game play.
 ]]
--- Last card hidden.
-local hideLastCard = true
+-- Last card in season is hidden.
+local hideLastCardInSeason = true
 -- Variable season length
 local variableSeasonLength = false
 
@@ -316,8 +317,6 @@ local demoSetupSeasonIndex = 3
 -- Genders:
 --   Blue and Green Male
 --   Red and Yellow Female
-
-
 -- Blue Hand:
 --   2 Robots. 2 Radios.
 -- Red Hand
@@ -329,35 +328,35 @@ local demoSetupSeasonIndex = 3
 --
 -- For a four player game, we need 4 cards/player + 1 = 17 cards.
 local stackedDeckCardTypes = {
-    -- Goes to Blue. 2 cards.
-    cardTypes.doll,
-    cardTypes.radio,
+        -- Goes to Blue. 2 cards.
+        cardTypes.doll,
+        cardTypes.radio,
 
-    -- Goes to Red. 2 cards.
-    cardTypes.wrapping,
-    cardTypes.robot,
-    -- Goes to Yellow.  3 cards
-    cardTypes.doll,
-    cardTypes.kite,
-    cardTypes.kite,
+        -- Goes to Red. 2 cards.
+        cardTypes.wrapping,
+        cardTypes.robot,
+        -- Goes to Yellow.  3 cards
+        cardTypes.doll,
+        cardTypes.kite,
+        cardTypes.kite,
 
-    -- Goes to Green.  10 cards.
-    --   1 dolls. (2 slop)
-    --   4 kites (1 slop)
-    --   2 robot (2 slop)
-    --   2 radio (1 slop)
-    --   1 poop (1 slop
-    cardTypes.poop,
-    cardTypes.radio,
-    cardTypes.kite,
-    cardTypes.doll,
-    cardTypes.kite,
+        -- Goes to Green.  10 cards.
+        --   1 dolls. (2 slop)
+        --   4 kites (1 slop)
+        --   2 robot (2 slop)
+        --   2 radio (1 slop)
+        --   1 poop (1 slop
+        cardTypes.poop,
+        cardTypes.radio,
+        cardTypes.kite,
+        cardTypes.doll,
+        cardTypes.kite,
 
-    cardTypes.robot,
-    cardTypes.kite,
-    cardTypes.robot,
-    cardTypes.kite,
-    cardTypes.radio,
+        cardTypes.robot,
+        cardTypes.kite,
+        cardTypes.robot,
+        cardTypes.kite,
+        cardTypes.radio,
 }
 
 --[[--------------------------
@@ -514,7 +513,7 @@ local function getSeatedPlayerObjects()
     -- A mock for development:
     -- If there's just one, pretend there are 4.
     if #seatedPlayerObjects == 1 then
-        for i = 1, debugPlayerCount-1 do
+        for i = 1, debugPlayerCount - 1 do
             table.insert(seatedPlayerObjects, makeMockSeatedPlayerObject(i))
         end
     end
@@ -525,20 +524,13 @@ end
 -- Returns a table with card and the deck: in TTS taking the second to last
 -- card from deck actually creates a new object for the remaining deck, a "deck" with one card).
 local function safeTakeFromDeck(deck)
-    debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: deck = ", deck.name)
     local card = deck.takeObject()
-    debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck after takeObject: card = ", card)
-    debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck after takeObject: deck = ", deck)
     if deck.remainder ~= nil then
-        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: deck.remainder = ", deck.remainder)
         deck = deck.remainder
     end
     if card == nil then
-        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: card is nil")
         return {card = deck, deck = nil}
     else
-        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: card is ", card)
-        debugPrint("SourceDeckCreation", "Doug: safeTakeFromDeck: deck is ", deck)
         return {card = card, deck = deck}
     end
 end
@@ -976,7 +968,7 @@ local bottomButtonConfigsByButtonId = {
         isEnabled = function()
             debugPrint("DealingASeason", "Doug: isEnabled 001")
 
-            debugPrint("DealingASeason", "Doug: isEnabled appState = ", appState)
+            debugPrint("DealingASeason", "Doug: isEnabled appState = ", getAppState())
             -- We are allowed to deal next season if:
             -- 1) current app state is "SetupNewGameRunning": end of setup is dealing first season.
             -- 2) current app state is "Game is running": at the end of previous season, game is running,
@@ -1078,7 +1070,7 @@ end
 -- If "condition" is true we use the 't' variant, else the 'f'.
 -- WE SHOULD ONLY LOOK AT STATE TO DETERMINE TEXT, not other UI truths.
 local function updateButtonText(buttonId)
-    debugPrint("ButtonConfiguration", "Doug: updateButtonText: buttonId = ", buttonId, " buttonEnabled = ", buttonEnabled)
+    debugPrint("ButtonConfiguration", "Doug: updateButtonText: buttonId = ", buttonId)
     local buttonTextVariants = buttonTextVariantsByButtonId[buttonId]
 
     -- Not all buttons have varying text.
@@ -1657,8 +1649,12 @@ local function cloneSourceDeckAndAddCardsToGameDeck(sourceDeckWithNumCards)
     local sourceDeck = sourceDeckWithNumCards.sourceDeck
     local numCards = sourceDeckWithNumCards.numCards
 
+    debugPrint("GameDeckCreation", "cloneSourceDeckAndAddCardsToGameDeck numCards = ", numCards)
+    local numCardsAvailable = sourceDeck.getQuantity()
+    debugPrint("GameDeckCreation", "cloneSourceDeckAndAddCardsToGameDeck numCardsAvailable = ", numCardsAvailable)
+
+
     if not sourceDeck then
-        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: sourceDeck is missing, early out")
         return false
     end
 
@@ -1681,22 +1677,14 @@ local function cloneSourceDeckAndAddCardsToGameDeck(sourceDeckWithNumCards)
     -- Grab this many cards from cloned deck.
     local takenObject
 
-    debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: numCards = ", numCards)
-
     if numCards == 1 then
-        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: deck = ", cloneOfSourceDeck)
         local result = safeTakeFromDeck(cloneOfSourceDeck)
         takenObject = result.card
         cloneOfSourceDeck = result.deck
-        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: takenObject = ", takenObject)
-        debugPrint("SourceDeckCreation", "Doug: cloneSourceDeckAndAddCardsToGameDeck: cloneOfSourceDeck = ", cloneOfSourceDeck)
-
     else
         local splitDecks = cloneOfSourceDeck.cut(numCards)
         takenObject = splitDecks[2]
     end
-
-    debugPrint("DemoSetup", "Doug: cloneSourceDeckAndAddCardsToGameDeck: takenObject.type = ", takenObject.type)
 
     -- Not locked...
     takenObject.setLock(false)
@@ -1764,8 +1752,8 @@ local function onGameDeckCreated(gameDeck, gameDeckReadyCallback)
 
     -- Flip and shuffle.
     flipAndShuffleDeck(gameDeck, function()
-        -- Hit the "all done with deck creation" gameDeckReadyCallback.
-        gameDeckReadyCallback(gameDeck)
+            -- Hit the "all done with deck creation" gameDeckReadyCallback.
+            gameDeckReadyCallback(gameDeck)
     end)
 end
 
@@ -1795,7 +1783,6 @@ Generic util for drawing cards from a deck and laying them out in a line.
 ---------------------------
 -- Place next card from given deck.
 local function placeCardWhichMayChangeDeck(deck, layoutDetails, onCardPlaced, opt_options)
-    debugPrint("SourceDeckCreation", "Doug: placeCardWhichMayChangeDeck: deck = ", deck)
     assert(layoutDetails, "layoutDetails is missing")
     assert(layoutDetails.columnIndex, "layoutDetails.columnIndex is missing")
     assert(layoutDetails.numColumns, "layoutDetails.numColumns is missing")
@@ -1803,6 +1790,8 @@ local function placeCardWhichMayChangeDeck(deck, layoutDetails, onCardPlaced, op
     assert(layoutDetails.numRows, "layoutDetails.numRows is missing")
 
     local options = opt_options or {}
+
+    local hideLastCard = options.hideLastCard or false
 
     -- We are dealing cards right to left, and season is played left to right.
     -- We do this beacause last card dealt is visible, we want that on left side, "Start" of season.
@@ -1813,14 +1802,11 @@ local function placeCardWhichMayChangeDeck(deck, layoutDetails, onCardPlaced, op
     else
         flip = true
     end
-    debugPrint("GameDeckPlacement", "Doug: placeCardWhichMayChangeDeck: flip = ", flip)
 
     local result = safeTakeFromDeck(deck)
 
     local updatedDeck = result.deck
     local card = result.card
-    debugPrint("SourceDeckCreation", "Doug: placeCardWhichMayChangeDeck: card = ", card)
-    debugPrint("SourceDeckCreation", "Doug: placeCardWhichMayChangeDeck: updatedDeck = ", updatedDeck)
     if options.cardTwiddleCallback then
         options.cardTwiddleCallback(card, layoutDetails.columnIndex)
     else
@@ -2032,14 +2018,32 @@ local function confirmCardNames()
     end
 end
 
+-- Move the source card decks offscreen
+local function hideSourceDecks()
+    debugPrint("SourceDeckCreation", "Doug: hideSourceDecks hi there")
+    debugDump("SourceDeckCreation", "Doug: hideSourceDecks: cardTypeToSourceDeckGUID = ", cardTypeToSourceDeckGUID)
+    for _, sourceDeckGUID in pairs(cardTypeToSourceDeckGUID) do
+        debugPrint("SourceDeckCreation", "Doug: hideSourceDecks: sourceDeckGUID = ", sourceDeckGUID)
+        local sourceDeck = getObjectFromGUID(sourceDeckGUID)
+        assert(sourceDeck, "Error: sourceDeck is nil")
+        local position = sourceDeck.getPosition()
+        position.y = hiddenDeckYPos
+        sourceDeck.setPosition(position)
+        sourceDeck.setLock(true)
+    end
+end
+
 local function onSourceDecksMade()
     debugPrintTime("source decks created.")
     Wait.time(function()
         debugPrintTime("source decks created: waited.")
         fillInCardTypeToSourceDeckGUID()
         confirmCardNames()
-        debugPrint("StateMachine", "Doug: setting appState to WaitingForSetupNewGame")
-        setPrivateState({appState = appStates.WaitingForSetupNewGame})
+        Wait.time(function()
+            hideSourceDecks()
+            debugPrint("StateMachine", "Doug: setting appState to WaitingForSetupNewGame")
+            setPrivateState({appState = appStates.WaitingForSetupNewGame})
+        end, standardWaitSec)
     end, standardWaitSec)
 end
 
@@ -2059,8 +2063,12 @@ end
 -- One source deck per card type.
 -- For each card type, what's the max of that type we'd ever need.
 local function getMaxCardCountForSourceDeckOfType(cardType)
+    -- Note: I should be able to give an honest answer but somehow game
+    -- system barfs on decks of size 2.
+    -- Clamp to some non-2 min value.
     local cardDistribution = cardDistributionByNumPlayers[maxPlayers]
-    return cardDistribution[cardType]
+    local realValue = cardDistribution[cardType]
+    return realValue > 10 and realValue or 10
 end
 
 local function makeSourceDecksFromImportedCards()
@@ -2068,6 +2076,7 @@ local function makeSourceDecksFromImportedCards()
 
     for _, importedCard in pairs(importedCards) do
         local cardType = importedCard.getName()
+        debugPrint("SourceDeckCreation", "Doug: makeSourceDecksFromImportedCards: cardType = ", cardType)
         importedCard.setName(cardType)
         importedCard.addTag(sourceCardTag)
         importedCard.removeTag(importedCardTag)
@@ -2078,6 +2087,7 @@ local function makeSourceDecksFromImportedCards()
         clonedCardPos.y = clonedCardPos.y + 1
 
         local numCardsInSourceDeck = getMaxCardCountForSourceDeckOfType(cardType)
+        debugPrint("SourceDeckCreation", "Doug: makeSourceDecksFromImportedCards: numCardsInSourceDeck = ", numCardsInSourceDeck)
 
         for _ = 1, numCardsInSourceDeck - 1 do
             local clonedCard = importedCard.clone()
@@ -2121,7 +2131,8 @@ local function makeSourceDecks()
     local function cardTwiddleCallback(importedCard, index)
         -- set tag on new card.
         importedCard.addTag(importedCardTag)
-        importedCard.setName(orderedCardTypes[index])
+        local cardType = orderedCardTypes[index]
+        importedCard.setName(cardType)
     end
 
     -- place cards from imported deck.
@@ -2135,6 +2146,7 @@ local function makeSourceDecks()
     debugPrint("SourceDeckCreation", "Doug: makeSourceDecks callling recursivePlaceNextCard")
     recursivePlaceNextCard(importedDeck, layoutDetails, onAllImportedDeckCardsPlaced, {
         cardTwiddleCallback = cardTwiddleCallback,
+        hideLastCard = false,
     })
 end
 
@@ -2213,10 +2225,10 @@ local function setupXml(callback)
 
         -- Unfortunately it takes a bit for new XML to "settle".
         Wait.time(function()
-            -- Now we cache a notion of "pristine" XML: at game end
-            -- we reset to this.
-            pristineXml = UI.GetXmlTable()
-            callback()
+                -- Now we cache a notion of "pristine" XML: at game end
+                -- we reset to this.
+                pristineXml = UI.GetXmlTable()
+                callback()
         end, standardWaitSec)
     end, standardWaitSec)
 end
@@ -2283,17 +2295,6 @@ Helpers for setup and cleanup.
 
 ]]
 ---------------------------
--- Move the source card decks offscreen
-local function hideSourceDecks()
-    for _, sourceDeckGUID in pairs(cardTypeToSourceDeckGUID) do
-        local sourceDeck = getObjectFromGUID(sourceDeckGUID)
-        local position = sourceDeck.getPosition()
-        position.y = hiddenDeckYPos
-        sourceDeck.setPosition(position)
-        sourceDeck.setLock(true)
-    end
-end
-
 local function cleanupOldGame()
     debugPrint("Cleanup", "Doug: cleanupOldGame")
 
@@ -2348,8 +2349,6 @@ local function createScriptingBasedUI()
 end
 
 local function doSetupNewGameAfterStateChange(clickedPlayer)
-    hideSourceDecks()
-
     -- Cleanup any old game.
     cleanupOldGame()
 
@@ -2390,8 +2389,8 @@ local function recursiveMoveNextCardToTopOfDeck(gameDeck, index, onDeckStacked)
         debugPrint("DemoSetup", "Doug: recursiveMoveNextCardToTopOfDeck: card.name = ", card.name)
         if card.name == targetCardType then
             cardIndex = card.index
-            -- We do NOT break here: we want the last match so we don't disturb the cards we may have already stacked on top.
-            -- This is lame/brittle but it's late and I don't care.
+        -- We do NOT break here: we want the last match so we don't disturb the cards we may have already stacked on top.
+        -- This is lame/brittle but it's late and I don't care.
         end
     end
     assert(cardIndex ~= -1, "Did not find targetCardType in deck")
@@ -2406,8 +2405,8 @@ local function recursiveMoveNextCardToTopOfDeck(gameDeck, index, onDeckStacked)
 
     -- Let this settle.
     Wait.time(function()
-        -- Move the next card.
-        recursiveMoveNextCardToTopOfDeck(gameDeck, index + 1, onDeckStacked)
+            -- Move the next card.
+            recursiveMoveNextCardToTopOfDeck(gameDeck, index + 1, onDeckStacked)
     end, waitForFallingCardToSettle)
 end
 
@@ -2446,17 +2445,19 @@ local function dealSeasonAfterPrivateStateChangeInternal()
             setPrivateState({
                 appState = appStates.GameRunning,
             })
-    end)
+    end, {
+        hideLastCard = hideLastCardInSeason,
+    })
 end
 
 local function dealSeasonAfterPrivateStateChange()
     if doDemoSetup then
         -- Before dealing, stack the deck.
         stackTheDeck(function()
-            -- Let it settle.
-            Wait.time(function()
-                dealSeasonAfterPrivateStateChangeInternal()
-            end, waitForFallingCardToSettle)
+                -- Let it settle.
+                Wait.time(function()
+                    dealSeasonAfterPrivateStateChangeInternal()
+                end, waitForFallingCardToSettle)
         end)
     else
         dealSeasonAfterPrivateStateChangeInternal()
@@ -2476,11 +2477,11 @@ function onObjectLeaveContainer(container, leave_object)
     if container.type == "Deck" then
         debugPrint("DemoSetup", "Doug: onObjectLeaveContainer: 002")
         leave_object.setTags(container.getTags())
-   end
-   debugPrint("DemoSetup", "Doug: onObjectLeaveContainer: 003")
+    end
+    debugPrint("DemoSetup", "Doug: onObjectLeaveContainer: 003")
 end
 
- -- The onLoad event is called after the game save finishes loading.
+-- The onLoad event is called after the game save finishes loading.
 function onLoad()
     debugPrintTime("declaringValidStates")
     -- Init state.
@@ -2493,7 +2494,7 @@ function onLoad()
     declareValidState("biddingIsOpen", false)
     if doDemoSetup then
         -- It gets incremented by 1 when we deal the cards for the season.
-        declareValidState("seasonIndex", demoSetupSeasonIndex-1)
+        declareValidState("seasonIndex", demoSetupSeasonIndex - 1)
     else
         declareValidState("seasonIndex", 0)
     end
