@@ -1,0 +1,69 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="../css/santa_images.css" />
+    <link rel="stylesheet" href="../css/toy_component.css" />
+    <link rel="stylesheet" href="../SharedWebBoardGame/css/card.css" />
+    <link rel="stylesheet" href="../SharedWebBoardGame/css/main.css" />
+    <link rel="stylesheet" href="../SharedWebBoardGame/css/image.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+    <style type="text/css"></style>
+  </head>
+
+  <body id="body">
+    <!-- configure Dojo -->
+    <script>
+      // Instead of using data-dojo-config, we're creating a dojoConfig
+      // object *before* we load dojo.js; they're functionally identical,
+      // it's just easier to read this approach with a larger configuration.
+      var dojoConfig = {
+        baseUrl: "..",
+        async: true,
+        // This code registers the correct location of the "demo"
+        // package so we can load Dojo from the CDN whilst still
+        // being able to load local modules
+        packages: [
+          { name: "dojo", location: "../../bower_components/dojo" },
+          { name: "javascript", location: "javascript" },
+          {
+            name: "sharedJavascript",
+            location: "SharedWebBoardgame/javascript",
+          },
+        ],
+      };
+    </script>
+    <!-- load Dojo -->
+    <script src="../../../bower_components/dojo/dojo.js"></script>
+
+    <script>
+      require([
+        "javascript/toyComponentCards",
+        "sharedJavascript/cards",
+        "sharedJavascript/debugLog",
+        "sharedJavascript/systemConfigs",
+      ], function (toyComponentCards, cards, debugLog, systemConfigs) {
+        // See systemConfigs.js for more details on configs.
+        // This is the TTS config.
+        var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
+        ttsConfigs.singleCardInstance = true;
+        var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
+        //  nonTTSConfigs.skipCardBacks = true;
+
+        systemConfigs.setSystemConfigs(ttsConfigs);
+
+        cards.addCards(
+          "Santa's Sweatshop",
+          "#228b22",
+          toyComponentCards.getNumToyComponentCards(),
+          toyComponentCards.addCardFrontAtIndex,
+          toyComponentCards.addToyComponentCardBack
+        );
+      });
+    </script>
+  </body>
+</html>
