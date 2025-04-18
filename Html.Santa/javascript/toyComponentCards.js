@@ -23,8 +23,12 @@ define([
   // Constants
   var minicardWidth = 30;
   var minicardHeight = minicardWidth * 1.4;
-  var specialImageSize = minicardHeight;
   var whiteOutlineClass = "white_outline";
+
+  var specialBorderColor = "#FFD700";
+  var basicBorderColor = "#000066";
+  var radioBorderColor = "#006600";
+
   var toyComponentCardConfigs = [
     {
       title: "Doll",
@@ -35,8 +39,8 @@ define([
       },
       floor: -2,
       playType: "normal",
-      color: "#ddaaaa",
-      borderColor: "#884444",
+      color: "#87CEFA",
+      borderColor: basicBorderColor,
     },
     {
       title: "Kite",
@@ -47,8 +51,8 @@ define([
       },
       floor: -3,
       playType: "normal",
-      color: "#ddaa88",
-      borderColor: "#884444",
+      color: "#6495ED",
+      borderColor: basicBorderColor,
     },
     {
       title: "Robot",
@@ -59,8 +63,8 @@ define([
       },
       floor: -4,
       playType: "normal",
-      color: "#ddddaa",
-      borderColor: "#884444",
+      color: "#000080",
+      borderColor: basicBorderColor,
     },
     {
       title: "Radio",
@@ -71,8 +75,8 @@ define([
       },
       floor: -6,
       playType: "challenge",
-      color: "#aaaaaa",
-      borderColor: "#777777",
+      color: "#00aa00",
+      borderColor: "radioBorderColor",
     },
     /*     {
                    title: "Matryoshka",
@@ -99,10 +103,10 @@ define([
     {
       title: "Wrapping Paper",
       class: "wrappingPaper",
-      special: "x2",
+      special: "x2 pts",
       playType: "special",
-      color: "#aaddaa",
-      borderColor: "#444488",
+      color: "#FF5733",
+      borderColor: specialBorderColor,
     },
     {
       title: "Elf Magic",
@@ -110,37 +114,66 @@ define([
       specialImageClasses: ["doll", "kite", "robot"],
       specialImagesSeparator: "/",
       playType: "special",
-      color: "#aaaadd",
-      borderColor: "#444488",
+      color: "#FF8C42",
+      borderColor: specialBorderColor,
     },
     {
       title: "Broom",
       class: "broom",
-      image: "../images/ToyComponents/broom.png",
       specialImageClasses: ["floor", "rightArrow", "floor"],
       playType: "special",
-      color: "#dd88dd",
-      borderColor: "#444488",
+      color: "#FFC300",
+      borderColor: specialBorderColor,
     },
-    /*
-               {
-                   title: "Gloves",
-                   class: "gloves",
-        image: "../images/ToyComponents/gloves.png",
-      specialImageClasses: ["floor", "rightArrow", "workbench"],
-        floor: -10,
-        playType: "special",
-        borderColor:  "#FFD700",
-               },
-               {
-                   title: "Fruitcake",
-                   class: "fruitcake",
-        image: "../images/ToyComponents/fruitcake.png",
-      specialImageClasses: ["fruitcake", "doubleArrow", "card"],
-        floor: -10,
-        playType: "special",
-        borderColor:  "#FFD700",
-               },*/
+    {
+      title: "Gloves",
+      class: "gloves",
+      specialImageClasses: ["floor", "rightArrow", "card"],
+      playType: "special",
+      color: "#FF6F61",
+      borderColor: specialBorderColor,
+    },
+    {
+      title: "RC Drone-Borg",
+      class: "cyborg",
+      specialImageClasses: ["doll", "kite", "robot", "radio"],
+      special: "5 pts",
+      playType: "special",
+      color: "#FFB347",
+      borderColor: specialBorderColor,
+    },
+    {
+      title: "Fruitcake",
+      class: "fruitcake",
+      specialImageClasses: ["card", "doubleArrow", "card"],
+      playType: "special",
+      color: "#FF704D",
+      borderColor: specialBorderColor,
+    },
+    {
+      title: "Whistle",
+      class: "whistle",
+      playType: "special",
+      special: "4 pts",
+      color: "#FF4433",
+      borderColor: specialBorderColor,
+    },
+    {
+      title: "Knife",
+      class: "knife",
+      specialImageClasses: ["handshake", "arrow"],
+      playType: "special",
+      color: "#E25822",
+      borderColor: specialBorderColor,
+    },
+    {
+      title: "Satin",
+      class: "satin",
+      specialImageClasses: ["doll", "plus_one_pt"],
+      playType: "special",
+      color: "#FF5E78",
+      borderColor: specialBorderColor,
+    },
   ];
 
   // Functions
@@ -201,15 +234,6 @@ define([
       htmlUtils.addDiv(wrapper, ["craftWrapper"], "craftWrapper", text);
     }
 
-    if (toyComponentCardConfig.special) {
-      special = htmlUtils.addDiv(
-        wrapper,
-        ["special"],
-        "special",
-        toyComponentCardConfig.special
-      );
-    }
-
     if (toyComponentCardConfig.specialImageClasses) {
       var imagesWrapper = htmlUtils.addDiv(
         wrapper,
@@ -245,6 +269,15 @@ define([
           );
         }
       }
+    }
+
+    if (toyComponentCardConfig.special) {
+      special = htmlUtils.addDiv(
+        wrapper,
+        ["special"],
+        "special",
+        toyComponentCardConfig.special
+      );
     }
 
     if (toyComponentCardConfig.floor) {
@@ -328,7 +361,7 @@ define([
     classArray.push(toyComponentCardConfig.class);
     var cardFrontNode = cards.addCardFront(parent, classArray, id);
 
-    var gradient = `radial-gradient(${toyComponentCardConfig.color} 30%, #ffffff)`;
+    var gradient = `radial-gradient(#ffffff 65%, ${toyComponentCardConfig.color})`;
 
     domStyle.set(cardFrontNode, {
       background: gradient,

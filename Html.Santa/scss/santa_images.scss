@@ -30,6 +30,49 @@ div.pseudo_image.broom {
   background-image: url("../images/ToyComponents/broom.png");
 }
 
+div.pseudo_image.plus_one_pt {
+  width: 60px;
+}
+
+div.pseudo_image.plus_one_pt::before {
+  content: "+1 pt";
+  font-size: 35px;
+  white-space: nowrap;
+  display: flex;
+}
+
+
+div.pseudo_image.satin {
+  background-image: url("../images/ToyComponents/satin.png");
+}
+div.pseudo_image.whistle {
+  background-image: url("../images/ToyComponents/whistle.png");
+}
+
+div.pseudo_image.handshake {
+  background-image: url("../images/ToyComponents/handshake.png");
+}
+
+div.pseudo_image.knife {
+  background-image: url("../images/ToyComponents/knife.png");
+}
+
+div.pseudo_image.arrow {
+  background-image: url("../images/ToyComponents/arrow.png");
+}
+
+div.pseudo_image.gloves {
+  background-image: url("../images/ToyComponents/gloves.png");
+}
+
+div.pseudo_image.cyborg {
+  background-image: url("../images/ToyComponents/cyborg.png");
+}
+
+div.pseudo_image.fruitcake {
+  background-image: url("../images/ToyComponents/fruitcake.png");
+}
+
 div.pseudo_image.floor {
   background-image: url("../images/ToyComponents/floor.png");
 }
