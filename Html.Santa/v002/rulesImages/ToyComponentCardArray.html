@@ -64,7 +64,7 @@
           pageless: true,
         });
 
-        var cardInstanceArray = [
+        var unknownCardInstanceArray = [
           {
             title: "Doll",
           },
@@ -89,6 +89,61 @@
           {
             title: "Broom",
             // sfacedown: true,
+          },
+        ];
+
+        var setupExampleCardInstanceArray = [
+          {
+            title: "Robot",
+          },
+          {
+            title: "Robot",
+          },
+          {
+            title: "Radio",
+          },
+          {
+            title: "Doll",
+          },
+          {
+            title: "Doll",
+          },
+          {
+            title: "Kite",
+          },
+          {
+            title: "Doll",
+          },
+          {
+            title: "Elf Magic",
+          },
+          {
+            title: "Kite",
+          },
+          {
+            title: "Radio",
+          },
+          {
+            title: "Doll",
+          },
+          {
+            title: "Doll",
+          },
+          {
+            title: "Kite",
+          },
+          {
+            title: "Robot",
+          },
+          {
+            title: "Kite",
+          },
+          {
+            title: "Reindeer Poop",
+          },
+          {
+            title: "Kite",
+            facedown: true,
           },
         ];
 
@@ -121,15 +176,22 @@
           "margin-left": "10px",
         });
 
+        var cardInstanceArray = setupExampleCardInstanceArray;
+
+        debugLog.debugLog(
+          "Cards",
+          "Doug: cardInstanceArray.length = ",
+          cardInstanceArray.length
+        );
+
         for (var i = 0; i < cardInstanceArray.length; i++) {
           var cardInstance = cardInstanceArray[i];
           var card;
           if (cardInstance.facedown) {
-            card = toyComponentCards.addBack(
+            card = toyComponentCards.addToyComponentCardBack(
               pageNode,
               "Santa's Sweatshop",
-              "#228b22",
-              configs
+              "#228b22"
             );
           } else {
             var toyComponentCardConfig =

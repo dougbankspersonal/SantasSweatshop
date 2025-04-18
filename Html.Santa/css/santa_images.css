@@ -1,3 +1,7 @@
+div.pseudo_image.santaHead {
+  background-image: url("../images/Trackers/santaHead.png");
+}
+
 div.pseudo_image.doll {
   background-image: url("../images/ToyComponents/doll.png");
 }

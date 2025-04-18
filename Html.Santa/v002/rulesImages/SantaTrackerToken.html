@@ -1,10 +1,11 @@
 <html>
   <head>
-    <link rel="stylesheet" href="../css/santa_images.css" />
-    <link rel="stylesheet" href="../css/toy_component.css" />
-    <link rel="stylesheet" href="../SharedWebBoardGame/css/card.css" />
-    <link rel="stylesheet" href="../SharedWebBoardGame/css/main.css" />
-    <link rel="stylesheet" href="../SharedWebBoardGame/css/image.css" />
+    <link rel="stylesheet" href="../../css/santa_images.css" />
+    <link rel="stylesheet" href="../../css/santa_tracker_token.css" />
+    <link rel="stylesheet" href="../../css/toy_component.css" />
+    <link rel="stylesheet" href="../../SharedWebBoardGame/css/card.css" />
+    <link rel="stylesheet" href="../../SharedWebBoardGame/css/main.css" />
+    <link rel="stylesheet" href="../../SharedWebBoardGame/css/image.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,7 +23,7 @@
       // object *before* we load dojo.js; they're functionally identical,
       // it's just easier to read this approach with a larger configuration.
       var dojoConfig = {
-        baseUrl: "..",
+        baseUrl: "../..",
         async: true,
         // This code registers the correct location of the "demo"
         // package so we can load Dojo from the CDN whilst still
@@ -38,35 +39,41 @@
       };
     </script>
     <!-- load Dojo -->
-    <script src="../../../bower_components/dojo/dojo.js"></script>
+    <script src="../../../../bower_components/dojo/dojo.js"></script>
 
     <script>
       require([
-        "javascript/toyComponentCards",
+        "dojo/dom",
+        "dojo/dom-style",
         "sharedJavascript/cards",
         "sharedJavascript/debugLog",
+        "sharedJavascript/genericMeasurements",
+        "sharedJavascript/htmlUtils",
         "sharedJavascript/systemConfigs",
-      ], function (toyComponentCards, cards, debugLog, systemConfigs) {
-        var useTTS = false;
-        if (useTTS) {
-          // See systemConfigs.js for more details on configs.
-          // This is the TTS config.
-          var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
-          ttsConfigs.singleCardInstance = true;
-          systemConfigs.setSystemConfigs(ttsConfigs);
-        } else {
-          var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
-          // nonTTSConfigs.skipCardBacks = true;
-          systemConfigs.setSystemConfigs(nonTTSConfigs);
-        }
+        "javascript/toyComponentCards",
+      ], function (
+        dom,
+        domStyle,
+        cards,
+        debugLog,
+        genericMeasurements,
+        htmlUtils,
+        systemConfigs,
+        toyComponentCards
+      ) {
+        systemConfigs.setSystemConfigs({
+          pageless: true,
+        });
 
-        cards.addCards(
-          "",
-          "#228b22",
-          toyComponentCards.getNumToyComponentCards(),
-          toyComponentCards.addCardFrontAtIndex,
-          toyComponentCards.addToyComponentCardBack
+        var bodyNode = dom.byId("body");
+        var pageOfItemsContents = htmlUtils.addPageOfItems(bodyNode);
+        var trackerDiv = htmlUtils.addDiv(
+          pageOfItemsContents,
+          ["tracker"],
+          "tracker"
         );
+
+        var image = htmlUtils.addImage(trackerDiv, ["santaHead"]);
       });
     </script>
   </body>
