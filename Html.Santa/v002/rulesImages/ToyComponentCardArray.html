@@ -168,7 +168,8 @@
         }
 
         var bodyNode = dom.byId("body");
-        var pageNode = htmlUtils.addPageOfItems(bodyNode);
+        var pageNode = htmlUtils.addPageOfItems(bodyNode, ["card_array"]);
+
         domStyle.set(pageNode, {
           "margin-top": "10px",
           "margin-bottom": "10px",

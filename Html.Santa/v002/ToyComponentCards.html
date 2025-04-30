@@ -47,7 +47,7 @@
         "sharedJavascript/debugLog",
         "sharedJavascript/systemConfigs",
       ], function (toyComponentCards, cards, debugLog, systemConfigs) {
-        var useTTS = true;
+        var useTTS = false;
         if (useTTS) {
           // See systemConfigs.js for more details on configs.
           // This is the TTS config.
@@ -56,7 +56,7 @@
           systemConfigs.setSystemConfigs(ttsConfigs);
         } else {
           var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
-          // nonTTSConfigs.skipCardBacks = true;
+          nonTTSConfigs.skipCardBacks = true;
           systemConfigs.setSystemConfigs(nonTTSConfigs);
         }
 

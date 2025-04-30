@@ -41,6 +41,10 @@ div.pseudo_image.plus_one_pt::before {
   display: flex;
 }
 
+div.pseudo_image.player_mat_image {
+  background-image: url("../images/PlayerMat/playerMat.png");
+}
+
 div.pseudo_image.satin {
   background-image: url("../images/ToyComponents/satin.png");
 }
@@ -82,7 +86,7 @@ div.pseudo_image.santa {
 }
 
 div.pseudo_image.santaHead {
-  background-image: url("../images/ToyComponents/santaHead.png");
+  background-image: url("../images/Trackers/santaHead.png");
 }
 
 div.pseudo_image.doubleArrow {

@@ -39,7 +39,7 @@ define([
       },
       floor: -2,
       playType: "normal",
-      color: "#87CEFA",
+      color: "#C7CEFF",
       borderColor: basicBorderColor,
     },
     {
@@ -105,7 +105,7 @@ define([
       class: "wrappingPaper",
       special: "x2 pts",
       playType: "special",
-      color: "#FF5733",
+      color: "#FF8844",
       borderColor: specialBorderColor,
     },
     {
@@ -114,7 +114,7 @@ define([
       specialImageClasses: ["doll", "kite", "robot"],
       specialImagesSeparator: "/",
       playType: "special",
-      color: "#FF8C42",
+      color: "#FF8888",
       borderColor: specialBorderColor,
     },
     {
@@ -122,7 +122,7 @@ define([
       class: "broom",
       specialImageClasses: ["floor", "rightArrow", "floor"],
       playType: "special",
-      color: "#FFC300",
+      color: "#FFFF88",
       borderColor: specialBorderColor,
     },
     {
@@ -130,7 +130,7 @@ define([
       class: "gloves",
       specialImageClasses: ["floor", "rightArrow", "card"],
       playType: "special",
-      color: "#FF6F61",
+      color: "#FF4488",
       borderColor: specialBorderColor,
     },
     {
@@ -139,7 +139,7 @@ define([
       specialImageClasses: ["doll", "kite", "robot", "radio"],
       special: "5 pts",
       playType: "special",
-      color: "#FFB347",
+      color: "#FF88FF",
       borderColor: specialBorderColor,
     },
     {
@@ -147,7 +147,7 @@ define([
       class: "fruitcake",
       specialImageClasses: ["card", "doubleArrow", "card"],
       playType: "special",
-      color: "#FF704D",
+      color: "#884444",
       borderColor: specialBorderColor,
     },
     {
@@ -155,7 +155,7 @@ define([
       class: "whistle",
       playType: "special",
       special: "4 pts",
-      color: "#FF4433",
+      color: "#888844",
       borderColor: specialBorderColor,
     },
     {
@@ -163,7 +163,7 @@ define([
       class: "knife",
       specialImageClasses: ["handshake", "arrow"],
       playType: "special",
-      color: "#E25822",
+      color: "#884488",
       borderColor: specialBorderColor,
     },
     {
@@ -171,7 +171,7 @@ define([
       class: "satin",
       specialImageClasses: ["doll", "plus_one_pt"],
       playType: "special",
-      color: "#FF5E78",
+      color: "#FFCC44",
       borderColor: specialBorderColor,
     },
   ];
@@ -199,7 +199,7 @@ define([
           parent,
           [
             whiteOutlineClass,
-            "toyComponentImage",
+            "toy_component_image",
             toyComponentCardConfig.class,
             indexClass,
           ],
@@ -297,7 +297,7 @@ define([
   }
 
   function addToyComponentCardBack(parent, title, color) {
-    var backNode = htmlUtils.addCard(parent, ["back", "toyComponent"], "back");
+    var backNode = htmlUtils.addCard(parent, ["back", "toy_component"], "back");
 
     cards.setCardSize(backNode);
 
@@ -357,7 +357,7 @@ define([
     var id = idElements.join(".");
 
     var classArray = [];
-    classArray.push("toyComponent");
+    classArray.push("toy_component");
     classArray.push(toyComponentCardConfig.class);
     var cardFrontNode = cards.addCardFront(parent, classArray, id);
 
