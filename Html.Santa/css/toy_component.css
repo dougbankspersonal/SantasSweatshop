@@ -2,6 +2,11 @@
   filter: drop-shadow(0 0 8px black);
 }
 
+.pseudo_image.floor, .pseudo_image.special_image {
+  height: 60px;
+  width: 60px;
+}
+
 .card.toy_component {
   font-family: "Mountains of Christmas", serif;
   text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
@@ -25,11 +30,22 @@
   z-index: 1;
   font-size: 40px;
 }
+.card.front.toy_component .wrapper .special_customs_wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.card.front.toy_component .wrapper .reward_points {
+  font-size: 14px;
+  font-weight: bold;
+  display: inline;
+}
 .card.front.toy_component .wrapper div.title {
   font-size: 30px;
   white-space: pre-line;
 }
-.card.front.toy_component .wrapper .craftWrapper {
+.card.front.toy_component .wrapper .craft_wrapper {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -41,33 +57,31 @@
   background-color: #fffff0;
   transform: rotate(5deg);
 }
-.card.front.toy_component .wrapper .craftWrapper .points {
-  font-size: 18px;
-  font-weight: bold;
-}
-.card.front.toy_component .wrapper .imagesWrapper {
+.card.front.toy_component .wrapper .images_wrapper {
   display: flex;
   flex-direction: row;
 }
-.card.front.toy_component .wrapper .imagesWrapper .pseudo_image {
+.card.front.toy_component .wrapper .images_wrapper .pseudo_image {
   height: 50px;
   width: 50px;
 }
-.card.front.toy_component .wrapper .imagesWrapper .pseudo_image.plus_one_pt {
+.card.front.toy_component .wrapper .images_wrapper .pseudo_image.plus_one_pt {
   width: 70px;
 }
-.card.front.toy_component .wrapper .special {
+.card.front.toy_component .wrapper .custom {
   font-size: 35px;
 }
-.card.front.toy_component .wrapper .floorWrapper {
+.card.front.toy_component .wrapper .penalty {
+  white-space: nowrap;
+}
+.card.front.toy_component .wrapper .floor_wrapper {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
 }
-.card.front.toy_component .wrapper .floorWrapper .floor {
-  height: 60px;
-  width: 60px;
+.card.front.toy_component .wrapper .special_custom.small {
+  font-size: 25px;
 }
 .card.front.toy_component div.toy_component_image {
   width: 60px;

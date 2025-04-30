@@ -29,6 +29,10 @@ define([
   var basicBorderColor = "#000066";
   var radioBorderColor = "#006600";
 
+  var CustomTypeText = "Text";
+  var CustomTypePtsText = "PtsText";
+  var CustomTypeImage = "Image";
+
   var toyComponentCardConfigs = [
     {
       title: "Doll",
@@ -94,7 +98,13 @@ define([
     {
       title: "Reindeer Poop",
       class: "poop",
-      special: "No Crafting",
+      specialCustoms: [
+        {
+          type: CustomTypeText,
+          text: "No Crafting",
+          small: true,
+        },
+      ],
       floor: -7,
       playType: "special",
       color: "#886633",
@@ -103,7 +113,12 @@ define([
     {
       title: "Wrapping Paper",
       class: "wrappingPaper",
-      special: "x2 pts",
+      specialCustoms: [
+        {
+          type: CustomTypePtsText,
+          text: "+Toy = x2",
+        },
+      ],
       playType: "special",
       color: "#FF8844",
       borderColor: specialBorderColor,
@@ -120,7 +135,21 @@ define([
     {
       title: "Broom",
       class: "broom",
-      specialImageClasses: ["floor", "rightArrow", "floor"],
+      specialCustoms: [
+        {
+          type: CustomTypeImage,
+          imageClass: "floor",
+        },
+        {
+          type: CustomTypeImage,
+          imageClass: "rightArrow",
+        },
+        {
+          type: CustomTypeText,
+          text: "X",
+          fontColor: "red",
+        },
+      ],
       playType: "special",
       color: "#FFFF88",
       borderColor: specialBorderColor,
@@ -136,8 +165,15 @@ define([
     {
       title: "RC Drone-Borg",
       class: "cyborg",
+      imagesWrapperScale: 0.6,
       specialImageClasses: ["doll", "kite", "robot", "radio"],
-      special: "5 pts",
+      specialImagesSeparator: "+",
+      specialCustoms: [
+        {
+          type: CustomTypePtsText,
+          text: "= 5",
+        },
+      ],
       playType: "special",
       color: "#FF88FF",
       borderColor: specialBorderColor,
@@ -154,7 +190,12 @@ define([
       title: "Whistle",
       class: "whistle",
       playType: "special",
-      special: "4 pts",
+      specialCustoms: [
+        {
+          type: CustomTypePtsText,
+          text: "= 4",
+        },
+      ],
       color: "#888844",
       borderColor: specialBorderColor,
     },
@@ -169,7 +210,17 @@ define([
     {
       title: "Satin",
       class: "satin",
-      specialImageClasses: ["doll", "plus_one_pt"],
+      specialCustoms: [
+        {
+          type: CustomTypeImage,
+          imageClass: "doll",
+        },
+        {
+          type: CustomTypePtsText,
+          text: ": +1",
+          ptsSingular: true,
+        },
+      ],
       playType: "special",
       color: "#FFCC44",
       borderColor: specialBorderColor,
@@ -177,6 +228,19 @@ define([
   ];
 
   // Functions
+  function maybeAddSpacer(parent, opt_index, opt_separator) {
+    var separator = opt_separator ? opt_separator : "&nbsp;";
+
+    if (separator && opt_index && opt_index > 0) {
+      htmlUtils.addDiv(
+        parent,
+        ["special_image_spacer"],
+        "specialImageSpacer",
+        separator
+      );
+    }
+  }
+
   function makeMinicard(parent) {
     var minicard = htmlUtils.addDiv(parent, ["minicard"], "minicard");
     domStyle.set(minicard, {
@@ -184,6 +248,87 @@ define([
       width: `${minicardWidth}px`,
     });
     return minicard;
+  }
+
+  function generatePtsHtml(ptsText, opt_ptsSingular, opt_addEquals) {
+    var maybeEquals = opt_addEquals ? "=" : "";
+    var ptOrPts = opt_ptsSingular ? "pt" : "pts";
+    return `<span>${maybeEquals}${ptsText}</span><span class="reward_points">${ptOrPts}.</span>`;
+  }
+
+  function addNthSpecialImage(
+    imagesWrapper,
+    specialImageClass,
+    opt_index,
+    opt_separator
+  ) {
+    maybeAddSpacer(imagesWrapper, opt_index, opt_separator);
+
+    if (specialImageClass == "card") {
+      makeMinicard(imagesWrapper);
+    } else {
+      var image = htmlUtils.addImage(
+        imagesWrapper,
+        [whiteOutlineClass, "special_image", specialImageClass],
+        "specialImage"
+      );
+    }
+  }
+
+  function addNthSpecialCustom(parent, specialCustoms, index, opt_separator) {
+    var specialCustom = specialCustoms[index];
+
+    maybeAddSpacer(parent, index);
+
+    var classes = ["special_custom"];
+    if (specialCustom.small) {
+      classes.push("small");
+    }
+
+    var customNode = htmlUtils.addDiv(parent, classes, "specialCustom");
+    if (specialCustom.type == CustomTypeText) {
+      customNode.innerHTML = specialCustom.text;
+    } else if (specialCustom.type == CustomTypePtsText) {
+      customNode.innerHTML = generatePtsHtml(
+        specialCustom.text,
+        specialCustom.ptsSingular
+      );
+    } else if (specialCustom.type == CustomTypeImage) {
+      addNthSpecialImage(customNode, specialCustom.imageClass);
+    }
+
+    if (specialCustom.fontColor) {
+      domStyle.set(customNode, "color", specialCustom.fontColor);
+    }
+  }
+
+  function addSpecialImages(parent, toyComponentCardConfig) {
+    var imagesWrapper = htmlUtils.addDiv(
+      parent,
+      ["images_wrapper"],
+      "imagesWrapper"
+    );
+
+    if (toyComponentCardConfig.imagesWrapperScale) {
+      domStyle.set(
+        imagesWrapper,
+        "transform",
+        `scale(${toyComponentCardConfig.imagesWrapperScale})`
+      );
+    }
+
+    for (
+      var i = 0;
+      i < toyComponentCardConfig.specialImageClasses.length;
+      i++
+    ) {
+      addNthSpecialImage(
+        imagesWrapper,
+        toyComponentCardConfig.specialImageClasses[i],
+        i,
+        toyComponentCardConfig.specialImagesSeparator
+      );
+    }
   }
 
   function addToyComponentFields(parent, toyComponentCardConfig) {
@@ -225,65 +370,38 @@ define([
       }
 
       if (points) {
-        rightSide = `${points} <div class="points">pts.</div>`;
+        rightSide = generatePtsHtml(points, points == 1, true);
       } else if (pointsPerCard) {
-        rightSide = `${pointsPerCard} <div class="points">pts./Card</div>`;
+        rightSide = `${pointsPerCard} <span class="reward_points">pts./Card</span>`;
       }
 
-      var text = `${leftSide} = ${rightSide}`;
-      htmlUtils.addDiv(wrapper, ["craftWrapper"], "craftWrapper", text);
+      var text = `${leftSide}${rightSide}`;
+      htmlUtils.addDiv(wrapper, ["craft_wrapper"], "craftWrapper", text);
     }
 
     if (toyComponentCardConfig.specialImageClasses) {
-      var imagesWrapper = htmlUtils.addDiv(
-        wrapper,
-        ["imagesWrapper"],
-        "imagesWrapper"
-      );
-      var separator = toyComponentCardConfig.specialImagesSeparator
-        ? toyComponentCardConfig.specialImagesSeparator
-        : "&nbsp;";
-      for (
-        var i = 0;
-        i < toyComponentCardConfig.specialImageClasses.length;
-        i++
-      ) {
-        var specialImageClass = toyComponentCardConfig.specialImageClasses[i];
-
-        if (separator && i > 0) {
-          htmlUtils.addDiv(
-            imagesWrapper,
-            ["specialImageSpacer"],
-            "specialImageSpacer",
-            separator
-          );
-        }
-
-        if (specialImageClass == "card") {
-          makeMinicard(imagesWrapper);
-        } else {
-          var image = htmlUtils.addImage(
-            imagesWrapper,
-            [whiteOutlineClass, "special_image", specialImageClass],
-            "specialImage"
-          );
-        }
-      }
+      addSpecialImages(wrapper, toyComponentCardConfig);
     }
 
-    if (toyComponentCardConfig.special) {
-      special = htmlUtils.addDiv(
+    if (toyComponentCardConfig.specialCustoms) {
+      var specialCustomsWrapper = htmlUtils.addDiv(
         wrapper,
-        ["special"],
-        "special",
-        toyComponentCardConfig.special
+        ["special_customs_wrapper"],
+        "specialCustomsWrapper"
       );
+      for (var i = 0; i < toyComponentCardConfig.specialCustoms.length; i++) {
+        addNthSpecialCustom(
+          specialCustomsWrapper,
+          toyComponentCardConfig.specialCustoms,
+          i
+        );
+      }
     }
 
     if (toyComponentCardConfig.floor) {
       var floorWrapper = htmlUtils.addDiv(
         wrapper,
-        ["floorWrapper"],
+        ["floor_wrapper"],
         "floorWrapper"
       );
       htmlUtils.addImage(floorWrapper, ["floor", whiteOutlineClass], "floor");
@@ -291,7 +409,11 @@ define([
         floorWrapper,
         ["penalty"],
         "penalty",
-        ` = ${toyComponentCardConfig.floor}`
+        generatePtsHtml(
+          toyComponentCardConfig.floor,
+          toyComponentCardConfig.floo == 1,
+          true
+        )
       );
     }
   }

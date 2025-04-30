@@ -4,6 +4,11 @@
   }
 }
 
+.pseudo_image.floor, .pseudo_image.special_image {
+    height: 60px;
+    width: 60px;
+}
+
 .card.toy_component {
   font-family: "Mountains of Christmas", serif;
   text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
@@ -27,12 +32,26 @@
     justify-content: center;
     z-index: 1;
     font-size: 40px;
+
+    .special_customs_wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reward_points {
+      font-size: 14px;
+      font-weight: bold;
+      display: inline;
+    }
+
     div.title {
       font-size: 30px;
       white-space: pre-line;
     }
 
-    .craftWrapper {
+    .craft_wrapper {
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -46,12 +65,7 @@
       transform: rotate(5deg);
     }
 
-    .craftWrapper .points {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .imagesWrapper {
+    .images_wrapper {
       display: flex;
       flex-direction: row;
       .pseudo_image {
@@ -64,19 +78,23 @@
       }
     }
 
-    .special {
+    .custom {
       font-size: 35px;
     }
 
-    .floorWrapper {
+    .penalty {
+      white-space: nowrap;
+    }
+
+    .floor_wrapper {
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      .floor {
-        height: 60px;
-        width: 60px;
-      }
+    }
+
+    .special_custom.small {
+      font-size: 25px;
     }
   }
 

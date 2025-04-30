@@ -34,13 +34,6 @@ div.pseudo_image.plus_one_pt {
   width: 60px;
 }
 
-div.pseudo_image.plus_one_pt::before {
-  content: "+1 pt";
-  font-size: 35px;
-  white-space: nowrap;
-  display: flex;
-}
-
 div.pseudo_image.player_mat_image {
   background-image: url("../images/PlayerMat/playerMat.png");
 }
