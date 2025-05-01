@@ -495,6 +495,7 @@ define([
   }
 
   function addCardFrontAtIndex(parent, index) {
+    console.assert(parent, "parent is null");
     var toyComponentCardConfig = cards.getCardConfigFromIndex(
       toyComponentCardConfigs,
       index
