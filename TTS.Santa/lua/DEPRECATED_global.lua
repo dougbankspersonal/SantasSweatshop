@@ -328,35 +328,35 @@ local demoSetupSeasonIndex = 3
 --
 -- For a four player game, we need 4 cards/player + 1 = 17 cards.
 local stackedDeckCardTypes = {
-        -- Goes to Blue. 2 cards.
-        cardTypes.doll,
-        cardTypes.radio,
+    -- Goes to Blue. 2 cards.
+    cardTypes.doll,
+    cardTypes.radio,
 
-        -- Goes to Red. 2 cards.
-        cardTypes.wrapping,
-        cardTypes.robot,
-        -- Goes to Yellow.  3 cards
-        cardTypes.doll,
-        cardTypes.kite,
-        cardTypes.kite,
+    -- Goes to Red. 2 cards.
+    cardTypes.wrapping,
+    cardTypes.robot,
+    -- Goes to Yellow.  3 cards
+    cardTypes.doll,
+    cardTypes.kite,
+    cardTypes.kite,
 
-        -- Goes to Green.  10 cards.
-        --   1 dolls. (2 slop)
-        --   4 kites (1 slop)
-        --   2 robot (2 slop)
-        --   2 radio (1 slop)
-        --   1 poop (1 slop
-        cardTypes.poop,
-        cardTypes.radio,
-        cardTypes.kite,
-        cardTypes.doll,
-        cardTypes.kite,
+    -- Goes to Green.  10 cards.
+    --   1 dolls. (2 slop)
+    --   4 kites (1 slop)
+    --   2 robot (2 slop)
+    --   2 radio (1 slop)
+    --   1 poop (1 slop
+    cardTypes.poop,
+    cardTypes.radio,
+    cardTypes.kite,
+    cardTypes.doll,
+    cardTypes.kite,
 
-        cardTypes.robot,
-        cardTypes.kite,
-        cardTypes.robot,
-        cardTypes.kite,
-        cardTypes.radio,
+    cardTypes.robot,
+    cardTypes.kite,
+    cardTypes.robot,
+    cardTypes.kite,
+    cardTypes.radio,
 }
 
 --[[--------------------------
@@ -529,9 +529,9 @@ local function safeTakeFromDeck(deck)
         deck = deck.remainder
     end
     if card == nil then
-        return {card = deck, deck = nil}
+        return { card = deck, deck = nil }
     else
-        return {card = card, deck = deck}
+        return { card = card, deck = deck }
     end
 end
 
@@ -638,19 +638,18 @@ local function setPrivateState(stateDictionary, opt_onRegisteredCallbacksCalled)
     _privateState._uiCallbackEnqueued = true
 
     Wait.time(function()
-            --- Hit all the callbacks.
-            debugPrint("StateMachine", "calling ui callbacks")
-            for _, uiCallback in pairs(_privateState._uiCallbacks) do
-                uiCallback(_privateState)
-            end
+        --- Hit all the callbacks.
+        debugPrint("StateMachine", "calling ui callbacks")
+        for _, uiCallback in pairs(_privateState._uiCallbacks) do
+            uiCallback(_privateState)
+        end
 
-            debugPrint("StateMachine", "enqueuing resolved")
-            _privateState._uiCallbackEnqueued = false
-            if opt_onRegisteredCallbacksCalled then
-                opt_onRegisteredCallbacksCalled()
-            end
+        debugPrint("StateMachine", "enqueuing resolved")
+        _privateState._uiCallbackEnqueued = false
+        if opt_onRegisteredCallbacksCalled then
+            opt_onRegisteredCallbacksCalled()
+        end
     end, waitOnPrivateStateChange)
-
 end
 
 local function addStateChangedStateModCallback(stateModCallback)
@@ -679,7 +678,8 @@ end
 
 local function removeStateChangedStateModCallback(callbackId)
     if not _privateState._stateModCallbacks[callbackId] then
-        debugPrint("StateMachine", "Error: called removeStateChangedStateModCallback with invalid callbackId = ", callbackId)
+        debugPrint("StateMachine", "Error: called removeStateChangedStateModCallback with invalid callbackId = ",
+            callbackId)
         return
     end
     _privateState._stateModCallbacks[callbackId] = nil
@@ -731,13 +731,13 @@ local function setTypedScoreByPlayerColor(playerColor, scoreInputCellName, score
         tsbpc[playerColor] = {}
     end
     tsbpc[playerColor][scoreInputCellName] = score
-    setPrivateState({typedScoresByPlayerColor = tsbpc})
+    setPrivateState({ typedScoresByPlayerColor = tsbpc })
 end
 
 local function cleanupTypedScoresForPlayer(playerColor)
     local tsbpc = getPrivateState("typedScoresByPlayerColor")
     tsbpc[playerColor] = {}
-    setPrivateState({typedScoresByPlayerColor = tsbpc})
+    setPrivateState({ typedScoresByPlayerColor = tsbpc })
 end
 
 local function getTotalScoreForPlayer(playerColor)
@@ -961,7 +961,7 @@ Worry about the set of bottom buttons.
 local bottomButtonConfigsByButtonId = {
     [setupNewGameButtonId] = {
         isEnabled = function()
-            return appStateInAppStates({appStates.WaitingForSetupNewGame})
+            return appStateInAppStates({ appStates.WaitingForSetupNewGame })
         end,
     },
     [incrementSeasonIndexAndDealButtonId] = {
@@ -975,7 +975,7 @@ local bottomButtonConfigsByButtonId = {
             --    we deal more cards.
             --    Note we are trusting the host to understand the concept of "season done".  There's no
             --    Code enforcement that previous cards are claimed, we crafted, etc.
-            if not appStateInAppStates({appStates.SetupNewGameRunning, appStates.GameRunning}) then
+            if not appStateInAppStates({ appStates.SetupNewGameRunning, appStates.GameRunning }) then
                 return false
             end
 
@@ -993,12 +993,12 @@ local bottomButtonConfigsByButtonId = {
     },
     [cleanupButtonId] = {
         isEnabled = function()
-            return appStateInAppStates({appStates.GameRunning})
+            return appStateInAppStates({ appStates.GameRunning })
         end,
     },
     [toggleBiddingOpenButtonId] = {
         isEnabled = function()
-            return appStateInAppStates({appStates.GameRunning})
+            return appStateInAppStates({ appStates.GameRunning })
         end,
         t = "Close Bidding",
         f = "Open Bidding",
@@ -1014,7 +1014,7 @@ local bottomButtonConfigsByButtonId = {
             if bio then
                 return false
             end
-            return appStateInAppStates({appStates.GameRunning})
+            return appStateInAppStates({ appStates.GameRunning })
         end,
         t = "Hide Bids",
         f = "Show Bids",
@@ -1022,7 +1022,7 @@ local bottomButtonConfigsByButtonId = {
     },
     [toggleFinalTallyPanelButtonId] = {
         isEnabled = function()
-            return appStateInAppStates({appStates.GameRunning})
+            return appStateInAppStates({ appStates.GameRunning })
         end,
         t = "Hide Scoring",
         f = "Show Scoring",
@@ -1070,17 +1070,6 @@ end
 -- If "condition" is true we use the 't' variant, else the 'f'.
 -- WE SHOULD ONLY LOOK AT STATE TO DETERMINE TEXT, not other UI truths.
 local function updateButtonText(buttonId)
-
-
-
-
-
-
-
-
-
-
-
     debugPrint("ButtonConfiguration", "Doug: updateButtonText: buttonId = ", buttonId)
     local buttonTextVariants = buttonTextVariantsByButtonId[buttonId]
 
@@ -1214,7 +1203,8 @@ local function makePlayerRow(rowIndex, seatedPlayerObjects)
 
     -- One cell for each player: fill with player name.
     for columnIndex, seatedPlayer in pairs(seatedPlayerObjects) do
-        local xmlPlayerNameCell = makeXmlTextCell(rowIndex, columnIndex + 1, seatedPlayer.steam_name, "HeaderCell", "HeaderText")
+        local xmlPlayerNameCell = makeXmlTextCell(rowIndex, columnIndex + 1, seatedPlayer.steam_name, "HeaderCell",
+            "HeaderText")
         safeAddToXmlChildren(xmlRow, xmlPlayerNameCell)
     end
     return xmlRow
@@ -1247,7 +1237,8 @@ local function makeNthInputRow(rowIndex, inputIndex, rowLabel, seatedPlayerObjec
     for _, seatedPlayerObject in pairs(seatedPlayerObjects) do
         local scoreForCellNumber = getTypedScoreByPlayerColor(seatedPlayerObject.color, scoreInputCellName)
         local inputIdPrefix = makeCellElementIdPrefx("ScoreInput", seatedPlayerObject.color, scoreInputCellName)
-        local xmlInputCell = makeXmlInputCell(inputIdPrefix, rowIndex, columnIndex, tostring(scoreForCellNumber), "onScoreInputCellUpdated")
+        local xmlInputCell = makeXmlInputCell(inputIdPrefix, rowIndex, columnIndex, tostring(scoreForCellNumber),
+            "onScoreInputCellUpdated")
         columnIndex = columnIndex + 1
         safeAddToXmlChildren(xmlRow, xmlInputCell)
     end
@@ -1373,13 +1364,13 @@ local function setBidDetailByPlayerColor(playerColor, bidDetailType, number)
     end
     bdbpc[playerColor][bidDetailType] = number
 
-    setPrivateState({bidDetailsByPlayerColor = bdbpc})
+    setPrivateState({ bidDetailsByPlayerColor = bdbpc })
 end
 
 local function cleanupBidDetailsForPlayer(playerColor)
     local bdbpc = getPrivateState("bidDetailsByPlayerColor")
     bdbpc[playerColor] = {}
-    setPrivateState({bidDetailsByPlayerColor = bdbpc})
+    setPrivateState({ bidDetailsByPlayerColor = bdbpc })
 end
 
 --[[--------------------------
@@ -1518,7 +1509,8 @@ local function makeBidInputRow(rowIndex, seatedPlayerObject)
     for _, bidDetailType in pairs(bidDetailTypes) do
         local bidForCell = getBidDetailByPlayerColor(seatedPlayerObject.color, bidDetailType)
         local inputIdPrefix = makeCellElementIdPrefx("BidInput", seatedPlayerObject.color, bidDetailType)
-        local xmlInputCell = makeXmlInputCell(inputIdPrefix, rowIndex, columnIndex, tostring(bidForCell), "onBidInputCellUpdated")
+        local xmlInputCell = makeXmlInputCell(inputIdPrefix, rowIndex, columnIndex, tostring(bidForCell),
+            "onBidInputCellUpdated")
         columnIndex = columnIndex + 1
         safeAddToXmlChildren(xmlRow, xmlInputCell)
     end
@@ -1703,8 +1695,8 @@ local function cloneSourceDeckAndAddCardsToGameDeck(sourceDeckWithNumCards)
     if not firstObjectPlacedinGameDeck then
         -- Place well above the middle of table: it will drop onto any cards previously
         -- placed and join to add to new deck.
-        takenObject.setPosition({0, 2, gameDeckZPos})
-        takenObject.setRotation({0, 180, 0})
+        takenObject.setPosition({ 0, 2, gameDeckZPos })
+        takenObject.setRotation({ 0, 180, 0 })
         firstObjectPlacedinGameDeck = takenObject
     else
         local gameDeck = firstObjectPlacedinGameDeck.putObject(takenObject)
@@ -1763,14 +1755,14 @@ local function onGameDeckCreated(gameDeck, gameDeckReadyCallback)
 
     -- Flip and shuffle.
     flipAndShuffleDeck(gameDeck, function()
-            -- Hit the "all done with deck creation" gameDeckReadyCallback.
-            gameDeckReadyCallback(gameDeck)
+        -- Hit the "all done with deck creation" gameDeckReadyCallback.
+        gameDeckReadyCallback(gameDeck)
     end)
 end
 
 local function createFlipAndShuffleGameDeck(gameDeckReadyCallback)
     -- Only valid to move here from SetupNewGameRunning state.
-    if not appStateInAppStates({appStates.SetupNewGameRunning}) then
+    if not appStateInAppStates({ appStates.SetupNewGameRunning }) then
         assert(false, "Invalid state transition in createGameDeckAndDealSeasons")
         return 1
     end
@@ -1902,7 +1894,7 @@ local function updatePanelVisibility(panelId)
     assert(panel ~= nil, "Panel missing: panelId = " .. panelId)
 
     -- If we are not running, any panel should be hidden.
-    if not appStateInAppStates({appStates.GameRunning}) then
+    if not appStateInAppStates({ appStates.GameRunning }) then
         debugPrint("PanelVisibility", "Doug: not running: panel is invisible")
         UI.hide(panelId)
         return
@@ -2053,7 +2045,7 @@ local function onSourceDecksMade()
         Wait.time(function()
             hideSourceDecks()
             debugPrint("StateMachine", "Doug: setting appState to WaitingForSetupNewGame")
-            setPrivateState({appState = appStates.WaitingForSetupNewGame})
+            setPrivateState({ appState = appStates.WaitingForSetupNewGame })
         end, standardWaitSec)
     end, standardWaitSec)
 end
@@ -2098,7 +2090,8 @@ local function makeSourceDecksFromImportedCards()
         clonedCardPos.y = clonedCardPos.y + 1
 
         local numCardsInSourceDeck = getMaxCardCountForSourceDeckOfType(cardType)
-        debugPrint("SourceDeckCreation", "Doug: makeSourceDecksFromImportedCards: numCardsInSourceDeck = ", numCardsInSourceDeck)
+        debugPrint("SourceDeckCreation", "Doug: makeSourceDecksFromImportedCards: numCardsInSourceDeck = ",
+            numCardsInSourceDeck)
 
         for _ = 1, numCardsInSourceDeck - 1 do
             local clonedCard = importedCard.clone()
@@ -2115,9 +2108,9 @@ end
 local function onAllImportedDeckCardsPlaced()
     debugPrint("SourceDeckCreation", "Doug: onAllImportedDeckCardsPlaced")
     Wait.time(function()
-            -- All the cards are out.
-            -- Make decks out of them.
-            makeSourceDecksFromImportedCards()
+        -- All the cards are out.
+        -- Make decks out of them.
+        makeSourceDecksFromImportedCards()
     end, 1)
 end
 
@@ -2236,10 +2229,10 @@ local function setupXml(callback)
 
         -- Unfortunately it takes a bit for new XML to "settle".
         Wait.time(function()
-                -- Now we cache a notion of "pristine" XML: at game end
-                -- we reset to this.
-                pristineXml = UI.GetXmlTable()
-                callback()
+            -- Now we cache a notion of "pristine" XML: at game end
+            -- we reset to this.
+            pristineXml = UI.GetXmlTable()
+            callback()
         end, standardWaitSec)
     end, standardWaitSec)
 end
@@ -2275,7 +2268,8 @@ end
 -- Return true iff panel is visible.
 local function togglePanelVisibilityWithButtonNameUpdate(panelId, buttonId)
     local isVisible = togglePanelVisibility(panelId)
-    debugPrint("BidInputPanel", "Doug: togglePanelVisibilityWithButtonNameUpdate: panelId = ", panelId, " isVisible = ", isVisible)
+    debugPrint("BidInputPanel", "Doug: togglePanelVisibilityWithButtonNameUpdate: panelId = ", panelId, " isVisible = ",
+        isVisible)
     updateButtonText(buttonId)
     return isVisible
 end
@@ -2310,7 +2304,7 @@ local function cleanupOldGame()
     debugPrint("Cleanup", "Doug: cleanupOldGame")
 
     -- Sanity check.
-    if not appStateInAppStates({appStates.CleanupRunning, appStates.SetupNewGameRunning}) then
+    if not appStateInAppStates({ appStates.CleanupRunning, appStates.SetupNewGameRunning }) then
         local appState = getPrivateState("appState")
         debugPrint("Cleanup", "Doug: cleanupOldGame: appState = ", appState)
         debugPrint("Cleanup", "Doug: cleanupOldGame early return")
@@ -2369,7 +2363,8 @@ local function doSetupNewGameAfterStateChange(clickedPlayer)
     Wait.time(function()
         debugPrint("DemoSetup", "Doug: doSetupNewGameAfterStateChange: calling createFlipAndShuffleGameDeck")
         createFlipAndShuffleGameDeck(function(gameDeck)
-            debugPrint("DemoSetup", "Doug: doSetupNewGameAfterStateChange: called createFlipAndShuffleGameDeck, gameDeck = ", gameDeck)
+            debugPrint("DemoSetup",
+                "Doug: doSetupNewGameAfterStateChange: called createFlipAndShuffleGameDeck, gameDeck = ", gameDeck)
             assert(gameDeck, "failed to make game deck")
             incrementSeasonIndexAndDeal(clickedPlayer)
         end)
@@ -2400,8 +2395,8 @@ local function recursiveMoveNextCardToTopOfDeck(gameDeck, index, onDeckStacked)
         debugPrint("DemoSetup", "Doug: recursiveMoveNextCardToTopOfDeck: card.name = ", card.name)
         if card.name == targetCardType then
             cardIndex = card.index
-        -- We do NOT break here: we want the last match so we don't disturb the cards we may have already stacked on top.
-        -- This is lame/brittle but it's late and I don't care.
+            -- We do NOT break here: we want the last match so we don't disturb the cards we may have already stacked on top.
+            -- This is lame/brittle but it's late and I don't care.
         end
     end
     assert(cardIndex ~= -1, "Did not find targetCardType in deck")
@@ -2411,13 +2406,13 @@ local function recursiveMoveNextCardToTopOfDeck(gameDeck, index, onDeckStacked)
     gameDeck.takeObject({
         index = cardIndex,
         smooth = false,
-        position = {0, 2, gameDeckZPos},
+        position = { 0, 2, gameDeckZPos },
     })
 
     -- Let this settle.
     Wait.time(function()
-            -- Move the next card.
-            recursiveMoveNextCardToTopOfDeck(gameDeck, index + 1, onDeckStacked)
+        -- Move the next card.
+        recursiveMoveNextCardToTopOfDeck(gameDeck, index + 1, onDeckStacked)
     end, waitForFallingCardToSettle)
 end
 
@@ -2452,10 +2447,10 @@ local function dealSeasonAfterPrivateStateChangeInternal()
     }
 
     recursivePlaceNextCard(gameDeck, layoutDetails, function()
-            -- All of the cards are now placed.  We are ready to play.
-            setPrivateState({
-                appState = appStates.GameRunning,
-            })
+        -- All of the cards are now placed.  We are ready to play.
+        setPrivateState({
+            appState = appStates.GameRunning,
+        })
     end, {
         hideLastCard = hideLastCardInSeason,
     })
@@ -2465,10 +2460,10 @@ local function dealSeasonAfterPrivateStateChange()
     if doDemoSetup then
         -- Before dealing, stack the deck.
         stackTheDeck(function()
-                -- Let it settle.
-                Wait.time(function()
-                    dealSeasonAfterPrivateStateChangeInternal()
-                end, waitForFallingCardToSettle)
+            -- Let it settle.
+            Wait.time(function()
+                dealSeasonAfterPrivateStateChangeInternal()
+            end, waitForFallingCardToSettle)
         end)
     else
         dealSeasonAfterPrivateStateChangeInternal()
@@ -2539,7 +2534,7 @@ function onObjectEnterContainer(container, object)
     if object.hasTag(sourceCardTag) then
         if container.getName() == "" then
             container.setName(object.getName())
-            container.setTags({sourceDeckTag})
+            container.setTags({ sourceDeckTag })
         end
     end
 end
@@ -2573,13 +2568,12 @@ function incrementSeasonIndexAndDeal(clickedPlayer)
         }, dealSeasonAfterPrivateStateChange)
 end
 
-
 function setupNewGame(clickedPlayer)
     if not isBottomButtonEnabled(setupNewGameButtonId) then
         return
     end
 
-    assert(appStateInAppStates({appStates.WaitingForSetupNewGame}), "Invalid state transition in setupNewGame")
+    assert(appStateInAppStates({ appStates.WaitingForSetupNewGame }), "Invalid state transition in setupNewGame")
 
     setPrivateState(
         {
@@ -2603,7 +2597,7 @@ function cleanup()
             -- waiting for setup state.
             cleanupOldGame()
             -- We are now back to the state where source decks are ready, game deck gone, etc.
-            setPrivateState({appState = appStates.WaitingForSetupNewGame})
+            setPrivateState({ appState = appStates.WaitingForSetupNewGame })
         end)
 end
 
@@ -2618,7 +2612,7 @@ function toggleBiddingOpen()
     debugPrint("BidInputPanel", "Doug: toggleBiddingIsOpen: bio = ", bio)
     local toggledBio = (not bio)
     debugPrint("BidInputPanel", "Doug: toggleBiddingIsOpen: toggledBio = ", toggledBio)
-    setPrivateState({biddingIsOpen = toggledBio})
+    setPrivateState({ biddingIsOpen = toggledBio })
 end
 
 function toggleBidViewPanel()
@@ -2646,23 +2640,22 @@ function onBidInputCellUpdated(player, textValue, cellInputElementId)
     UI.setAttribute(cellInputElementId, "text", textValue)
     -- After things settle, write bid into internal storage.
     Wait.time(function()
-            -- This id should be of the form:
-            -- BidInput.<PlayerColor>.<bidDetailType>_<rowIndex>_<columnIndex>
-            -- Get out color, bidDetailType, rowIndex, columnIndex.
-            local cellElementIdPrefix, _, _ = splitCellElementId(cellInputElementId)
-            local _, seatedPlayerColor, bidDetailType = splitCellElementIdPrefix(cellElementIdPrefix)
+        -- This id should be of the form:
+        -- BidInput.<PlayerColor>.<bidDetailType>_<rowIndex>_<columnIndex>
+        -- Get out color, bidDetailType, rowIndex, columnIndex.
+        local cellElementIdPrefix, _, _ = splitCellElementId(cellInputElementId)
+        local _, seatedPlayerColor, bidDetailType = splitCellElementIdPrefix(cellElementIdPrefix)
 
-            -- What player color are we dealing with?
-            -- Sanity check: these panels are only visible to owning player.
-            if player.color ~= seatedPlayerColor then
-                print("Error: onBidInputCellUpdated player color does not match seated player color")
-                return
-            end
+        -- What player color are we dealing with?
+        -- Sanity check: these panels are only visible to owning player.
+        if player.color ~= seatedPlayerColor then
+            print("Error: onBidInputCellUpdated player color does not match seated player color")
+            return
+        end
 
-            local bidValue = tonumber(textValue)
-            setBidDetailByPlayerColor(seatedPlayerColor, bidDetailType, bidValue)
+        local bidValue = tonumber(textValue)
+        setBidDetailByPlayerColor(seatedPlayerColor, bidDetailType, bidValue)
     end, handleInputWaitSec)
-
 end
 
 function onScoreInputCellUpdated(_, textValue, cellInputElementId)
@@ -2670,19 +2663,19 @@ function onScoreInputCellUpdated(_, textValue, cellInputElementId)
     UI.setAttribute(cellInputElementId, "text", textValue)
     -- After things settle, write score into internal storage and update the sum.
     Wait.time(function()
-            -- This id should be of the form:
-            -- ScoreInput.<PlayerColor>.<scoreInputCellName>_<rowIndex>_<columnIndex>
-            -- Get out color, rowIndex, columnIndex.
-            local cellElementIdPrefix, _, columnIndex = splitCellElementId(cellInputElementId)
-            local _, seatedPlayerColor, scoreInputCellName = splitCellElementIdPrefix(cellElementIdPrefix)
+        -- This id should be of the form:
+        -- ScoreInput.<PlayerColor>.<scoreInputCellName>_<rowIndex>_<columnIndex>
+        -- Get out color, rowIndex, columnIndex.
+        local cellElementIdPrefix, _, columnIndex = splitCellElementId(cellInputElementId)
+        local _, seatedPlayerColor, scoreInputCellName = splitCellElementIdPrefix(cellElementIdPrefix)
 
-            local scoreChange = tonumber(textValue)
-            setTypedScoreByPlayerColor(seatedPlayerColor, scoreInputCellName, scoreChange)
+        local scoreChange = tonumber(textValue)
+        setTypedScoreByPlayerColor(seatedPlayerColor, scoreInputCellName, scoreChange)
 
-            -- Get total for the player.
-            local totalScoreForPlayer = getTotalScoreForPlayer(seatedPlayerColor)
+        -- Get total for the player.
+        local totalScoreForPlayer = getTotalScoreForPlayer(seatedPlayerColor)
 
-            local sumId = makeCellElementId(textIdPrefix, finalTallySumRowIndex, columnIndex)
-            UI.setAttribute(sumId, "text", tostring(totalScoreForPlayer))
+        local sumId = makeCellElementId(textIdPrefix, finalTallySumRowIndex, columnIndex)
+        UI.setAttribute(sumId, "text", tostring(totalScoreForPlayer))
     end, handleInputWaitSec)
 end
