@@ -96,8 +96,8 @@ define([
                },
     */
     {
-      title: "Reindeer Poop",
-      class: "poop",
+      title: "Reindeer Poo",
+      class: "poo",
       specialCustoms: [
         {
           type: CustomTypeText,
