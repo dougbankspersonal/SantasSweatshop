@@ -4,22 +4,11 @@ define([
   "javascript/gameInfo",
   "sharedJavascript/cards",
   "sharedJavascript/debugLog",
-  "sharedJavascript/genericMeasurements",
   "sharedJavascript/htmlUtils",
-  "sharedJavascript/systemConfigs",
   "dojo/string",
   "dojo/dom-style",
   "dojo/domReady!",
-], function (
-  gameInfo,
-  cards,
-  debugLog,
-  genericMeasurements,
-  htmlUtils,
-  systemConfigs,
-  string,
-  domStyle
-) {
+], function (gameInfo, cards, debugLog, htmlUtils, string, domStyle) {
   // Constants
   var minicardWidth = 30;
   var minicardHeight = minicardWidth * 1.4;
@@ -33,6 +22,8 @@ define([
   var CustomTypePtsText = "PtsText";
   var CustomTypeImage = "Image";
 
+  var specialCounts = [1, 2, 3, 3];
+
   var toyComponentCardConfigs = [
     {
       title: "Doll",
@@ -45,6 +36,7 @@ define([
       playType: "normal",
       color: "#C7CEFF",
       borderColor: basicBorderColor,
+      counts: [13, 19, 25, 31],
     },
     {
       title: "Kite",
@@ -57,6 +49,7 @@ define([
       playType: "normal",
       color: "#6495ED",
       borderColor: basicBorderColor,
+      counts: [10, 15, 19, 24],
     },
     {
       title: "Robot",
@@ -69,32 +62,21 @@ define([
       playType: "normal",
       color: "#000080",
       borderColor: basicBorderColor,
+      counts: [7, 10, 13, 16],
     },
     {
       title: "Radio",
       class: "radio",
       craft: {
         number: 4,
-        points: 10,
+        points: 8,
       },
-      floor: -6,
+      floor: -5,
       playType: "challenge",
       color: "#00aa00",
       borderColor: "radioBorderColor",
+      counts: [5, 9, 9, 13],
     },
-    /*     {
-                   title: "Matryoshka",
-                   class: "matryoshka",
-                   craft: {
-          number: 4,
-          plus: true,
-          pointsPerCard: 2,
-        },
-        floor: -6,
-        playType: "challenge",
-        borderColor:  "#228b22",
-               },
-    */
     {
       title: "Reindeer Poo",
       class: "poo",
@@ -105,10 +87,11 @@ define([
           small: true,
         },
       ],
-      floor: -7,
+      floor: -5,
       playType: "special",
       color: "#886633",
       borderColor: "#593002",
+      counts: specialCounts,
     },
     {
       title: "Wrapping Paper",
@@ -116,12 +99,13 @@ define([
       specialCustoms: [
         {
           type: CustomTypePtsText,
-          text: "+Toy = x2",
+          text: "+Toy = +3",
         },
       ],
       playType: "special",
       color: "#FF8844",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "Elf Magic",
@@ -131,6 +115,7 @@ define([
       playType: "special",
       color: "#FF8888",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "Broom",
@@ -153,6 +138,7 @@ define([
       playType: "special",
       color: "#FFFF88",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "Gloves",
@@ -161,6 +147,7 @@ define([
       playType: "special",
       color: "#FF4488",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "RC Drone-Borg",
@@ -177,6 +164,7 @@ define([
       playType: "special",
       color: "#FF88FF",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "Fruitcake",
@@ -185,6 +173,7 @@ define([
       playType: "special",
       color: "#884444",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "Whistle",
@@ -198,6 +187,7 @@ define([
       ],
       color: "#888844",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "Knife",
@@ -206,6 +196,7 @@ define([
       playType: "special",
       color: "#884488",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
     {
       title: "Satin",
@@ -224,6 +215,7 @@ define([
       playType: "special",
       color: "#FFCC44",
       borderColor: specialBorderColor,
+      counts: specialCounts,
     },
   ];
 
@@ -267,7 +259,7 @@ define([
     if (specialImageClass == "card") {
       makeMinicard(imagesWrapper);
     } else {
-      var image = htmlUtils.addImage(
+      htmlUtils.addImage(
         imagesWrapper,
         [whiteOutlineClass, "special_image", specialImageClass],
         "specialImage"
@@ -331,12 +323,55 @@ define([
     }
   }
 
-  function addToyComponentFields(parent, toyComponentCardConfig) {
-    var wrapper = htmlUtils.addDiv(parent, ["wrapper"], "wrapper");
-    if (toyComponentCardConfig.title) {
-      var imageNode = htmlUtils.addDiv(wrapper, ["title"], "title");
-      imageNode.innerHTML = toyComponentCardConfig.title;
+  function addPlayerIndicator(
+    parent,
+    toyComponentCardConfig,
+    indexWithinConfig
+  ) {
+    var numPlayers = 2;
+    var counts = toyComponentCardConfig.counts;
+    debugLog.debugLog(
+      "Cards",
+      "Doug: addPlayerIndicator: indexWithinConfig = " + indexWithinConfig
+    );
+    for (var i = 0; i < counts.length; i++) {
+      debugLog.debugLog("Cards", "Doug: addPlayerIndicator: i = " + i);
+      debugLog.debugLog(
+        "Cards",
+        "Doug: addPlayerIndicator: counts[i] = " + counts[i]
+      );
+      if (indexWithinConfig >= counts[i]) {
+        numPlayers++;
+        debugLog.debugLog(
+          "Cards",
+          "Doug: addPlayerIndicator: numPlayers = " + numPlayers
+        );
+      }
     }
+
+    console.assert(numPlayers >= 3, "numPlayers must be at least 3");
+
+    var playerIndicatorNode = htmlUtils.addDiv(
+      parent,
+      ["player_indicator"],
+      "playerIndicator"
+    );
+    htmlUtils.addImage(playerIndicatorNode, ["player"], "player");
+    var maybePlus = numPlayers == gameInfo.maxPlayers ? "" : "+";
+    htmlUtils.addDiv(
+      playerIndicatorNode,
+      ["player_count"],
+      "playerCount",
+      numPlayers.toString() + maybePlus
+    );
+    return playerIndicatorNode;
+  }
+
+  function addToyComponentFields(
+    parent,
+    toyComponentCardConfig,
+    indexWithinConfig
+  ) {
     if (toyComponentCardConfig.class) {
       for (var i = 0; i < 4; i++) {
         var indexClass = "index" + i;
@@ -351,6 +386,19 @@ define([
           "toyComponentImage"
         );
       }
+    }
+
+    var counts = toyComponentCardConfig.counts;
+    var minCount = counts[0];
+
+    if (indexWithinConfig >= minCount) {
+      addPlayerIndicator(parent, toyComponentCardConfig, indexWithinConfig);
+    }
+
+    var wrapper = htmlUtils.addDiv(parent, ["wrapper"], "wrapper");
+    if (toyComponentCardConfig.title) {
+      var imageNode = htmlUtils.addDiv(wrapper, ["title"], "title");
+      imageNode.innerHTML = toyComponentCardConfig.title;
     }
 
     if (toyComponentCardConfig.craft) {
@@ -418,8 +466,11 @@ define([
     }
   }
 
-  function addToyComponentCardBack(parent, title, color) {
+  function addToyComponentCardBack(parent, null_title, color) {
     var backNode = htmlUtils.addCard(parent, ["back", "toy_component"], "back");
+
+    // Title should be null.
+    console.assert(null_title === null, "Title should be null for back card");
 
     cards.setCardSize(backNode);
 
@@ -430,20 +481,6 @@ define([
     domStyle.set(insetNode, "background", gradient);
 
     htmlUtils.addImage(insetNode, ["santa"], "santa");
-
-    var title = htmlUtils.addDiv(
-      insetNode,
-      ["cardBackTitle"],
-      "cardBackTitle",
-      title
-    );
-    var style = {};
-    var sc = systemConfigs.getSystemConfigs();
-
-    style["font-size"] = sc.smallCards
-      ? `${genericMeasurements.cardBackFontSize}px`
-      : `${genericMeasurements.bigCardBackFontSize}px`;
-    domStyle.set(title, style);
 
     return backNode;
   }
@@ -470,11 +507,15 @@ define([
     return retVal;
   }
 
-  function addCardFrontUsingConfigAndIndex(
+  function addToyComponentCardFront(
     parent,
     toyComponentCardConfig,
-    index
+    index,
+    opt_indexWithinConfig
   ) {
+    var indexWithinConfig =
+      opt_indexWithinConfig !== undefined ? opt_indexWithinConfig : 0;
+
     var idElements = ["toyComponent", index.toString()];
     var id = idElements.join(".");
 
@@ -490,7 +531,11 @@ define([
       "border-color": toyComponentCardConfig.borderColor,
     });
 
-    addToyComponentFields(cardFrontNode, toyComponentCardConfig);
+    addToyComponentFields(
+      cardFrontNode,
+      toyComponentCardConfig,
+      indexWithinConfig
+    );
     return cardFrontNode;
   }
 
@@ -500,6 +545,11 @@ define([
       toyComponentCardConfigs,
       index
     );
+    var indexWithinConfig = cards.getIndexWithinConfig(
+      toyComponentCardConfigs,
+      index
+    );
+
     debugLog.debugLog("Cards", "Doug: addCardFrontAtIndex: index = " + index);
     debugLog.debugLog(
       "Cards",
@@ -513,7 +563,12 @@ define([
         JSON.stringify(toyComponentCardConfig)
     );
 
-    addCardFrontUsingConfigAndIndex(parent, toyComponentCardConfig, index);
+    addToyComponentCardFront(
+      parent,
+      toyComponentCardConfig,
+      index,
+      indexWithinConfig
+    );
   }
 
   // Use code to figure out how many of each card we need.
@@ -529,7 +584,6 @@ define([
 
   var _numToyComponentCards = 0;
   function getNumToyComponentCards() {
-    console.log("Doug: getting numToyComponentCards");
     // Wait until we're asked to calculate so system configs can be applied.
     if (_numToyComponentCards === 0) {
       _numToyComponentCards = cards.getNumCardsFromConfigs(
@@ -552,7 +606,7 @@ define([
   // This returned object becomes the defined value of this module
   return {
     getNumToyComponentCards: getNumToyComponentCards,
-    addCardFrontUsingConfigAndIndex: addCardFrontUsingConfigAndIndex,
+    addToyComponentCardFront: addToyComponentCardFront,
     addCardFrontAtIndex: addCardFrontAtIndex,
     addToyComponentCardBack: addToyComponentCardBack,
     getToyComponentCardConfigByTitle: getToyComponentCardConfigByTitle,

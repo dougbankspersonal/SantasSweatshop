@@ -191,7 +191,7 @@
           if (cardInstance.facedown) {
             card = toyComponentCards.addToyComponentCardBack(
               pageNode,
-              "Santa's Sweatshop",
+              null,
               "#228b22"
             );
           } else {
@@ -201,7 +201,7 @@
               );
             console.assert(toyComponentCardConfig);
             toyComponentCardConfig.instanceCount = 1;
-            card = toyComponentCards.addCardFrontUsingConfigAndIndex(
+            card = toyComponentCards.addToyComponentCardFront(
               pageNode,
               toyComponentCardConfig,
               i

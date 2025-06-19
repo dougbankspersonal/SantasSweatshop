@@ -52,7 +52,6 @@
           // See systemConfigs.js for more details on configs.
           // This is the TTS config.
           var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
-          ttsConfigs.singleCardInstance = true;
           systemConfigs.setSystemConfigs(ttsConfigs);
         } else {
           var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
@@ -61,7 +60,7 @@
         }
 
         cards.addCards(
-          "",
+          null,
           "#228b22",
           toyComponentCards.getNumToyComponentCards(),
           toyComponentCards.addCardFrontAtIndex,

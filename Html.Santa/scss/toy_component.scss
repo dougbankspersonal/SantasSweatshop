@@ -1,7 +1,6 @@
-.card_array {
-  .card.toy_component {
-    filter: drop-shadow(0 0 8px black);
-  }
+.card_array > .page_of_items_contents > .card.toy_component {
+//    filter: drop-shadow(0 0 8px red);
+    box-shadow: 4px 6px 8px rgba(0, 0, 0, 0.5);
 }
 
 .pseudo_image.floor, .pseudo_image.special_image {
@@ -14,6 +13,26 @@
   text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
     1px 1px 0 #fff;
   font-weight: bold;
+}
+
+.card.front {
+    div.player_indicator {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    bottom: 20px;
+    left: 0px;
+    width: 100%;
+    div.player {
+      width: 36px;
+      height: 36px;
+    }
+    div.player_count {
+      font-size: 28px;
+    }
+  }
 }
 
 .card.front.toy_component {
