@@ -45,26 +45,43 @@
         "javascript/toyComponentCards",
         "sharedJavascript/cards",
         "sharedJavascript/debugLog",
+        "sharedJavascript/genericUtils",
         "sharedJavascript/systemConfigs",
-      ], function (toyComponentCards, cards, debugLog, systemConfigs) {
-        var useTTS = true;
+      ], function (
+        toyComponentCards,
+        cards,
+        debugLog,
+        genericUtils,
+        systemConfigs
+      ) {
+        var queryString = window.location.search;
+        // Create a URLSearchParams object
+        var params = new URLSearchParams(queryString);
+        // Get individual parameters
+        var useTTS = genericUtils.stringToBoolean(params.get("useTTS"));
+        var skipCardBacks = genericUtils.stringToBoolean(
+          params.get("skipCardBacks")
+        );
+
         if (useTTS) {
           // See systemConfigs.js for more details on configs.
           // This is the TTS config.
           var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
           systemConfigs.setSystemConfigs(ttsConfigs);
         } else {
-          var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
-          nonTTSConfigs.skipCardBacks = true;
+          var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs({
+            skipCardBacks: skipCardBacks,
+          });
           systemConfigs.setSystemConfigs(nonTTSConfigs);
         }
 
         cards.addCards(
-          null,
-          "#228b22",
           toyComponentCards.getNumToyComponentCards(),
           toyComponentCards.addCardFrontAtIndex,
-          toyComponentCards.addToyComponentCardBack
+          {
+            callback: toyComponentCards.addToyComponentCardBack,
+            hexColorString: "#228b22",
+          }
         );
       });
     </script>

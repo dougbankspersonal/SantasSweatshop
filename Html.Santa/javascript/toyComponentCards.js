@@ -467,10 +467,12 @@ define([
   }
 
   function addToyComponentCardBack(parent, null_title, color) {
+    console.log("Doug: null_title = " + null_title);
+
     var backNode = htmlUtils.addCard(parent, ["back", "toy_component"], "back");
 
-    // Title should be null.
-    console.assert(null_title === null, "Title should be null for back card");
+    // Title should be null or undefined or whatever.
+    console.assert(!null_title, "Title should be null for back card");
 
     cards.setCardSize(backNode);
 
