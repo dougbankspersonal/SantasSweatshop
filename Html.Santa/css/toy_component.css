@@ -2,7 +2,22 @@
   box-shadow: 4px 6px 8px rgba(0, 0, 0, 0.5);
 }
 
-.pseudo_image.floor, .pseudo_image.special_image {
+.dark_shadowed {
+  filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.pseudo_image.floor,
+.pseudo_image.special_image {
+  height: 60px;
+  width: 60px;
+}
+
+.pseudo_image.coin {
+  height: 60px;
+  width: 60px;
+}
+
+.pseudo_image.desk {
   height: 60px;
   width: 60px;
 }
@@ -38,7 +53,7 @@
   padding-right: 14px;
   position: relative;
 }
-.card.front.toy_component .wrapper {
+.card.front.toy_component .main_wrapper {
   width: 100%;
   height: 100%;
   display: inline-flex;
@@ -47,58 +62,70 @@
   justify-content: center;
   z-index: 1;
   font-size: 40px;
+  gap: 10px;
 }
-.card.front.toy_component .wrapper .special_customs_wrapper {
+.card.front.toy_component .main_wrapper .unbroken_row {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
 }
-.card.front.toy_component .wrapper .reward_points {
+.card.front.toy_component .main_wrapper .reward_points {
   font-size: 14px;
   font-weight: bold;
   display: inline;
 }
-.card.front.toy_component .wrapper div.title {
-  font-size: 30px;
+.card.front.toy_component .main_wrapper div.title {
+  font-size: 36px;
   white-space: pre-line;
 }
-.card.front.toy_component .wrapper .craft_wrapper {
+.card.front.toy_component .main_wrapper .craft_wrapper .card_collection {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+}
+.card.front.toy_component .main_wrapper .craft_wrapper .card_collection .minicard {
+  position: absolute;
+  top: 0px;
+}
+.card.front.toy_component .main_wrapper .floor_wrapper .colon_and_points .negative {
+  color: #994444;
+}
+.card.front.toy_component .main_wrapper .colon_and_points {
+  white-space: nowrap;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
 }
-.card.front.toy_component .wrapper .minicard {
+.card.front.toy_component .main_wrapper .minicard {
   border-radius: 10px;
-  border: 4px solid #000;
   background-color: #fffff0;
-  transform: rotate(5deg);
+  transform: rotate(-5deg);
+  filter: drop-shadow(8px 8px 4px rgba(0, 0, 0, 0.15));
 }
-.card.front.toy_component .wrapper .images_wrapper {
+.card.front.toy_component .main_wrapper .images_wrapper {
   display: flex;
   flex-direction: row;
 }
-.card.front.toy_component .wrapper .images_wrapper .pseudo_image {
+.card.front.toy_component .main_wrapper .images_wrapper .pseudo_image {
   height: 50px;
   width: 50px;
 }
-.card.front.toy_component .wrapper .images_wrapper .pseudo_image.plus_one_pt {
+.card.front.toy_component .main_wrapper .images_wrapper .pseudo_image.plus_one_pt {
   width: 70px;
 }
-.card.front.toy_component .wrapper .custom {
+.card.front.toy_component .main_wrapper .custom {
   font-size: 35px;
 }
-.card.front.toy_component .wrapper .penalty {
+.card.front.toy_component .main_wrapper .penalty {
   white-space: nowrap;
 }
-.card.front.toy_component .wrapper .floor_wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-}
-.card.front.toy_component .wrapper .special_custom.small {
+.card.front.toy_component .main_wrapper .special_custom.small {
   font-size: 25px;
 }
 .card.front.toy_component div.toy_component_image {
@@ -114,17 +141,14 @@
   top: 10px;
   left: 10px;
 }
-.card.front.toy_component div.toy_component_image.index1 {
-  top: 10px;
-  right: 10px;
+.card.front.toy_component div.toy_component_image.index_xl {
+  top: -50%;
+  left: -50%;
+  transform: translate(50%, 50%);
 }
-.card.front.toy_component div.toy_component_image.index2 {
-  bottom: 10px;
-  left: 10px;
-}
-.card.front.toy_component div.toy_component_image.index3 {
-  bottom: 10px;
-  right: 10px;
+
+.card.front.toy_component .wrapper .special_customs_wrapper .special_custom {
+  margin: 0 6px;
 }
 
 .card.back.toy_component .inset {

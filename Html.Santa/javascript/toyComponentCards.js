@@ -11,8 +11,12 @@ define([
 ], function (gameInfo, cards, debugLog, htmlUtils, string, domStyle) {
   // Constants
   var minicardWidth = 30;
+  var minicardBorderWidth = 4;
   var minicardHeight = minicardWidth * 1.4;
   var whiteOutlineClass = "white_outline";
+
+  var minicardCollectionWidth = minicardWidth * 3;
+  var minicardCollectionHeight = minicardHeight + 2 * minicardBorderWidth;
 
   var specialBorderColor = "#FFD700";
   var basicBorderColor = "#000066";
@@ -80,13 +84,10 @@ define([
     {
       title: "Reindeer Poo",
       class: "poo",
-      specialCustoms: [
-        {
-          type: CustomTypeText,
-          text: "No Crafting",
-          small: true,
-        },
-      ],
+      craft: {
+        number: 0,
+        points: 0,
+      },
       floor: -5,
       playType: "special",
       color: "#886633",
@@ -98,8 +99,16 @@ define([
       class: "wrappingPaper",
       specialCustoms: [
         {
+          type: CustomTypeText,
+          text: "+",
+        },
+        {
+          type: CustomTypeImage,
+          imageClass: "package",
+        },
+        {
           type: CustomTypePtsText,
-          text: "+Toy = +3",
+          points: 3,
         },
       ],
       playType: "special",
@@ -130,9 +139,8 @@ define([
           imageClass: "rightArrow",
         },
         {
-          type: CustomTypeText,
-          text: "X",
-          fontColor: "red",
+          type: CustomTypeImage,
+          imageClass: "noSymbol",
         },
       ],
       playType: "special",
@@ -143,14 +151,14 @@ define([
     {
       title: "Gloves",
       class: "gloves",
-      specialImageClasses: ["floor", "rightArrow", "card"],
+      specialImageClasses: ["floor", "rightArrow", "desk"],
       playType: "special",
       color: "#FF4488",
       borderColor: specialBorderColor,
       counts: specialCounts,
     },
     {
-      title: "RC Drone-Borg",
+      title: "RC<br>Drone-Borg",
       class: "cyborg",
       imagesWrapperScale: 0.6,
       specialImageClasses: ["doll", "kite", "robot", "radio"],
@@ -158,7 +166,7 @@ define([
       specialCustoms: [
         {
           type: CustomTypePtsText,
-          text: "= 5",
+          points: 5,
         },
       ],
       playType: "special",
@@ -169,7 +177,7 @@ define([
     {
       title: "Fruitcake",
       class: "fruitcake",
-      specialImageClasses: ["card", "doubleArrow", "card"],
+      specialImageClasses: ["desk", "doubleArrow", "desk"],
       playType: "special",
       color: "#884444",
       borderColor: specialBorderColor,
@@ -179,12 +187,10 @@ define([
       title: "Whistle",
       class: "whistle",
       playType: "special",
-      specialCustoms: [
-        {
-          type: CustomTypePtsText,
-          text: "= 4",
-        },
-      ],
+      craft: {
+        number: 1,
+        points: 4,
+      },
       color: "#888844",
       borderColor: specialBorderColor,
       counts: specialCounts,
@@ -208,8 +214,8 @@ define([
         },
         {
           type: CustomTypePtsText,
-          text: ": +1",
-          ptsSingular: true,
+          points: 1,
+          plusSign: true,
         },
       ],
       playType: "special",
@@ -238,14 +244,36 @@ define([
     domStyle.set(minicard, {
       height: `${minicardHeight}px`,
       width: `${minicardWidth}px`,
+      border: `${minicardBorderWidth}px solid #000`,
     });
     return minicard;
   }
 
-  function generatePtsHtml(ptsText, opt_ptsSingular, opt_addEquals) {
-    var maybeEquals = opt_addEquals ? "=" : "";
-    var ptOrPts = opt_ptsSingular ? "pt" : "pts";
-    return `<span>${maybeEquals}${ptsText}</span><span class="reward_points">${ptOrPts}.</span>`;
+  // We already have a parent wrapper.
+  // add in a "= n" node and a coin image.
+  // Returns nothing.
+  function insertSomethingEqualsPointsNode(
+    parentNode,
+    points,
+    opt_pointsPrefix
+  ) {
+    console.assert(Number.isInteger(points), "Points must be an integer");
+    var pointsString;
+    var pointsPrefix = opt_pointsPrefix ? opt_pointsPrefix : "";
+    if (points < 0) {
+      pointsString = ` :&nbsp;<div class="negative">${pointsPrefix}${points}</div>`;
+    } else {
+      pointsString = ` : ${pointsPrefix}${points}`;
+    }
+
+    htmlUtils.addDiv(
+      parentNode,
+      ["colon_and_points"],
+      "colonAndPoints",
+      pointsString
+    );
+
+    htmlUtils.addImage(parentNode, ["coin", "dark_shadowed"], "coin");
   }
 
   function addNthSpecialImage(
@@ -261,7 +289,7 @@ define([
     } else {
       htmlUtils.addImage(
         imagesWrapper,
-        [whiteOutlineClass, "special_image", specialImageClass],
+        ["special_image", specialImageClass, "dark_shadowed"],
         "specialImage"
       );
     }
@@ -270,9 +298,7 @@ define([
   function addNthSpecialCustom(parent, specialCustoms, index, opt_separator) {
     var specialCustom = specialCustoms[index];
 
-    maybeAddSpacer(parent, index);
-
-    var classes = ["special_custom"];
+    var classes = ["special_custom", "unbroken_row"];
     if (specialCustom.small) {
       classes.push("small");
     }
@@ -281,9 +307,10 @@ define([
     if (specialCustom.type == CustomTypeText) {
       customNode.innerHTML = specialCustom.text;
     } else if (specialCustom.type == CustomTypePtsText) {
-      customNode.innerHTML = generatePtsHtml(
-        specialCustom.text,
-        specialCustom.ptsSingular
+      insertSomethingEqualsPointsNode(
+        customNode,
+        specialCustom.points,
+        specialCustom.plusSign ? "+" : ""
       );
     } else if (specialCustom.type == CustomTypeImage) {
       addNthSpecialImage(customNode, specialCustom.imageClass);
@@ -367,26 +394,110 @@ define([
     return playerIndicatorNode;
   }
 
+  // A display if n fixed-sized cards in some fixed width.
+  function addMiniCardCollection(parentNode, craftConfig) {
+    var number = craftConfig.number;
+    console.assert(number > 0, "Number must be defined");
+
+    var cardCollectionNode = htmlUtils.addDiv(
+      parentNode,
+      ["card_collection"],
+      "cardCollection"
+    );
+
+    domStyle.set(cardCollectionNode, {
+      width: `${minicardCollectionWidth}px`,
+      height: `${minicardCollectionHeight}px`,
+    });
+
+    var widthMinusPoofedCard =
+      minicardCollectionWidth - minicardWidth - minicardBorderWidth * 2;
+    var leftChunk = widthMinusPoofedCard / (number - 1);
+
+    for (var i = 0; i < number; i++) {
+      var minicardNode = makeMinicard(cardCollectionNode);
+      var cardLeft = i * leftChunk;
+      domStyle.set(minicardNode, {
+        left: `${cardLeft}px`,
+      });
+    }
+
+    return cardCollectionNode;
+  }
+
+  function addCardCorners(parent, cardClass) {
+    if (cardClass == null || cardClass == undefined) {
+      return;
+    }
+
+    var indexClass = "index0";
+    htmlUtils.addImage(
+      parent,
+      [cardClass, whiteOutlineClass, "toy_component_image", indexClass],
+      "toyComponentImage"
+    );
+  }
+
+  function addCannotBeCraftedNode(parent) {
+    var cannotBeCraftedNode = htmlUtils.addDiv(
+      parent,
+      ["cannot_be_crafted"],
+      "cannotBeCrafted"
+    );
+    var deskNode = htmlUtils.addImage(
+      cannotBeCraftedNode,
+      ["desk", "dark_shadowed"],
+      "desk"
+    );
+    htmlUtils.addImage(deskNode, ["noSymbol"], "noSymbol");
+    return cannotBeCraftedNode;
+  }
+
+  function maybeAddStandardCraftngInfo(parentNode, toyComponentCardConfig) {
+    var craftingNode = null;
+    if (toyComponentCardConfig.craft) {
+      var craftConfig = toyComponentCardConfig.craft;
+      if (craftConfig.number > 0) {
+        craftingNode = htmlUtils.addDiv(
+          parentNode,
+          ["craft_wrapper", "unbroken_row"],
+          "craftWrapper"
+        );
+        addMiniCardCollection(craftingNode, craftConfig);
+        insertSomethingEqualsPointsNode(craftingNode, craftConfig.points);
+      } else {
+        craftingNode = addCannotBeCraftedNode(parentNode);
+      }
+    }
+    return craftingNode;
+  }
+
+  function maybeAddStandardFloorPenalty(parentNode, toyComponentCardConfig) {
+    if (toyComponentCardConfig.floor) {
+      var floorWrapperNode = htmlUtils.addDiv(
+        parentNode,
+        ["floor_wrapper", "unbroken_row"],
+        "floorWrapper"
+      );
+      var floorImageNode = htmlUtils.addImage(
+        floorWrapperNode,
+        ["floor"],
+        "floor"
+      );
+      insertSomethingEqualsPointsNode(
+        floorWrapperNode,
+        toyComponentCardConfig.floor
+      );
+    }
+  }
+
   function addToyComponentFields(
     parent,
     toyComponentCardConfig,
     indexWithinConfig
   ) {
-    if (toyComponentCardConfig.class) {
-      for (var i = 0; i < 4; i++) {
-        var indexClass = "index" + i;
-        var imageNode = htmlUtils.addImage(
-          parent,
-          [
-            whiteOutlineClass,
-            "toy_component_image",
-            toyComponentCardConfig.class,
-            indexClass,
-          ],
-          "toyComponentImage"
-        );
-      }
-    }
+    // These are the toy icons in upper left and lower corer of card.
+    addCardCorners(parent, toyComponentCardConfig.class);
 
     var counts = toyComponentCardConfig.counts;
     var minCount = counts[0];
@@ -395,46 +506,22 @@ define([
       addPlayerIndicator(parent, toyComponentCardConfig, indexWithinConfig);
     }
 
-    var wrapper = htmlUtils.addDiv(parent, ["wrapper"], "wrapper");
+    var mainWrapper = htmlUtils.addDiv(parent, ["main_wrapper"], "mainWapper");
     if (toyComponentCardConfig.title) {
-      var imageNode = htmlUtils.addDiv(wrapper, ["title"], "title");
+      var imageNode = htmlUtils.addDiv(mainWrapper, ["title"], "title");
       imageNode.innerHTML = toyComponentCardConfig.title;
     }
 
-    if (toyComponentCardConfig.craft) {
-      var number = toyComponentCardConfig.craft.number;
-      var points = toyComponentCardConfig.craft.points;
-      var pointsPerCard = toyComponentCardConfig.craft.pointsPerCard;
-      var plus = toyComponentCardConfig.craft.plus;
-
-      var leftSide;
-      var rightSide;
-      if (number) {
-        if (plus) {
-          leftSide = `x ${number}+`;
-        } else {
-          leftSide = `x ${number}`;
-        }
-      }
-
-      if (points) {
-        rightSide = generatePtsHtml(points, points == 1, true);
-      } else if (pointsPerCard) {
-        rightSide = `${pointsPerCard} <span class="reward_points">pts./Card</span>`;
-      }
-
-      var text = `${leftSide}${rightSide}`;
-      htmlUtils.addDiv(wrapper, ["craft_wrapper"], "craftWrapper", text);
-    }
+    maybeAddStandardCraftngInfo(mainWrapper, toyComponentCardConfig);
 
     if (toyComponentCardConfig.specialImageClasses) {
-      addSpecialImages(wrapper, toyComponentCardConfig);
+      addSpecialImages(mainWrapper, toyComponentCardConfig);
     }
 
     if (toyComponentCardConfig.specialCustoms) {
       var specialCustomsWrapper = htmlUtils.addDiv(
-        wrapper,
-        ["special_customs_wrapper"],
+        mainWrapper,
+        ["special_customs_wrapper", "unbroken_row"],
         "specialCustomsWrapper"
       );
       for (var i = 0; i < toyComponentCardConfig.specialCustoms.length; i++) {
@@ -446,29 +533,10 @@ define([
       }
     }
 
-    if (toyComponentCardConfig.floor) {
-      var floorWrapper = htmlUtils.addDiv(
-        wrapper,
-        ["floor_wrapper"],
-        "floorWrapper"
-      );
-      htmlUtils.addImage(floorWrapper, ["floor", whiteOutlineClass], "floor");
-      htmlUtils.addDiv(
-        floorWrapper,
-        ["penalty"],
-        "penalty",
-        generatePtsHtml(
-          toyComponentCardConfig.floor,
-          toyComponentCardConfig.floo == 1,
-          true
-        )
-      );
-    }
+    maybeAddStandardFloorPenalty(mainWrapper, toyComponentCardConfig);
   }
 
   function addToyComponentCardBack(parent, null_title, color) {
-    console.log("Doug: null_title = " + null_title);
-
     var backNode = htmlUtils.addCard(parent, ["back", "toy_component"], "back");
 
     // Title should be null or undefined or whatever.

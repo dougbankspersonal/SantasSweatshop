@@ -62,17 +62,23 @@
         var skipCardBacks = genericUtils.stringToBoolean(
           params.get("skipCardBacks")
         );
+        var singleCardInstance = genericUtils.stringToBoolean(
+          params.get("singleCardInstance")
+        );
 
+        var scConfigs;
         if (useTTS) {
           // See systemConfigs.js for more details on configs.
           // This is the TTS config.
-          var ttsConfigs = systemConfigs.addTTSCardSystemConfigs();
-          systemConfigs.setSystemConfigs(ttsConfigs);
+          scConfigs = systemConfigs.addTTSCardSystemConfigs();
         } else {
-          var nonTTSConfigs = systemConfigs.addCardSizingSystemConfigs();
-          nonTTSConfigs.skipCardBacks = skipCardBacks;
-          systemConfigs.setSystemConfigs(nonTTSConfigs);
+          scConfigs = systemConfigs.addCardSizingSystemConfigs();
+          scConfigs.skipCardBacks = skipCardBacks;
         }
+        if (singleCardInstance) {
+          scConfigs.singleCardInstance = singleCardInstance;
+        }
+        systemConfigs.setSystemConfigs(scConfigs);
 
         cards.addCards(
           toyComponentCards.getNumToyComponentCards(),

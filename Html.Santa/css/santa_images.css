@@ -26,8 +26,16 @@ div.pseudo_image.wrappingPaper {
   background-image: url("../images/ToyComponents/wrappingPaper.png");
 }
 
+div.pseudo_image.package {
+  background-image: url("../images/ToyComponents/package.png");
+}
+
 div.pseudo_image.broom {
   background-image: url("../images/ToyComponents/broom.png");
+}
+
+div.pseudo_image.noSymbol {
+  background-image: url("../images/ToyComponents/noSymbol.png");
 }
 
 div.pseudo_image.plus_one_pt {
@@ -92,6 +100,18 @@ div.pseudo_image.rightArrow {
 
 div.pseudo_image.player {
   background-image: url("../images/ToyComponents/player.png");
+}
+
+div.pseudo_image.coin {
+  background-image: url("../images/ToyComponents/coin.png");
+}
+
+div.pseudo_image.desk {
+  background-image: url("../images/ToyComponents/desk.png");
+}
+
+div.pseudo_image.x {
+  background-image: url("../images/ToyComponents/X.png");
 }
 
 /*# sourceMappingURL=santa_images.css.map */
