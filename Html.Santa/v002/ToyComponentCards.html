@@ -54,31 +54,9 @@
         genericUtils,
         systemConfigs
       ) {
-        var queryString = window.location.search;
-        // Create a URLSearchParams object
-        var params = new URLSearchParams(queryString);
-        // Get individual parameters
-        var useTTS = genericUtils.stringToBoolean(params.get("useTTS"));
-        var skipCardBacks = genericUtils.stringToBoolean(
-          params.get("skipCardBacks")
-        );
-        var singleCardInstance = genericUtils.stringToBoolean(
-          params.get("singleCardInstance")
-        );
+        var sc = systemConfigs.getCardSystemConfigs();
 
-        var scConfigs;
-        if (useTTS) {
-          // See systemConfigs.js for more details on configs.
-          // This is the TTS config.
-          scConfigs = systemConfigs.addTTSCardSystemConfigs();
-        } else {
-          scConfigs = systemConfigs.addCardSizingSystemConfigs();
-          scConfigs.skipCardBacks = skipCardBacks;
-        }
-        if (singleCardInstance) {
-          scConfigs.singleCardInstance = singleCardInstance;
-        }
-        systemConfigs.setSystemConfigs(scConfigs);
+        systemConfigs.setSystemConfigs(sc);
 
         cards.addCards(
           toyComponentCards.getNumToyComponentCards(),
